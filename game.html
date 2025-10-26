@@ -65,7 +65,7 @@ function goToTeacher(){
 // โหลด emoji data
 async function loadEmojiData() {
   if(!emojiData){
-   const res = await fetch('emoji.json');
+const res = await fetch('https://cdn.jsdelivr.net/gh/iamcal/emoji-data@master/emoji.json');
     emojiData=await res.json();
   }
 }
