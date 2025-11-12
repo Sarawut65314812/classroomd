@@ -680,8 +680,35 @@ button { cursor:pointer; }
     padding: 6px !important;
   }
 }
+/* Portrait-specific: ลดความกว้างกรอบภายใน (กรอบเทา/ไฟล์อินพุต) ให้แคบลงเมื่อเครื่องอยู่ในแนวตั้ง */
+@media (orientation: portrait) {
+  .main-container {
+    max-width: 86vw !important;
+    width: 86vw !important;
+    padding: 10px !important;
+  }
+  /* ย่อขนาดกรอบสี (เขียว/แดง) ด้านในให้แคบลงในแนวตั้ง */
+  .main-container > div[style*="display:flex"] > div {
+    flex: 1 1 calc(36% - 12px) !important;
+    max-width: calc(36% - 12px) !important;
+    padding: 8px !important;
+  }
+  /* ทำให้ตัว wrapper ของปุ่มเลือกไฟล์ไม่กว้างเกินไป */
+  .main-container > div[style*="display:flex"] > div .file-input-wrapper {
+    max-width: 64% !important;
+    margin: 6px auto !important;
+    display: block !important;
+  }
+  /* ปรับ label ภายในให้พอดีและไม่ล้น */
+  .main-container > div[style*="display:flex"] > div .file-input-label,
+  .main-container > div[style*="display:flex"] > div .file-input-label-correct,
+  .main-container > div[style*="display:flex"] > div .file-input-label-wrong {
+    font-size: 14px !important;
+    padding: 8px 12px !important;
+    white-space: normal !important;
+  }
+}
 </style>
-</head>
 </head>
 <body>
 
