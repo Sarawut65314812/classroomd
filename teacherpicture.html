@@ -539,6 +539,25 @@ button { cursor:pointer; }
   }
 }
 
+/* iPad Pro 13-inch specific adjustments */
+@media (min-width: 1366px) and (max-width: 1366px) {
+  .main-container > div[style*="display:flex"] > div {
+    flex: 0 0 30% !important; /* Adjust panel width to 30% */
+    max-width: calc(30% - 12px) !important;
+    box-sizing: border-box !important;
+  }
+  .main-container > div[style*="display:flex"] > div .file-input-wrapper {
+    max-width: 68% !important; /* Adjust file input wrapper */
+    margin: 6px auto !important;
+    display: block !important;
+  }
+  .main-container > div[style*="display:flex"] > div .image-preview-item {
+    width: 96px !important; /* Adjust preview image size */
+    height: 96px !important;
+    margin: 6px auto !important;
+  }
+}
+
 /* Final override: make colored panels size flexibly with .main-container
    - Two columns when there's room, each using roughly half the container (minus gap)
    - Collapse to full-width on small screens
