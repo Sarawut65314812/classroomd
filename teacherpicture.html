@@ -390,29 +390,69 @@ button { cursor:pointer; }
 /* apply on large tablets in both portrait and landscape explicitly */
 @media (min-width: 768px) and (max-width: 1366px) and (orientation: portrait) {
   .main-container > div[style*="display:flex"] > div {
-    flex: 0 0 46% !important; /* make each panel narrower */
-    max-width: 46% !important;
-    padding: 10px !important; /* reduce internal padding */
-    margin: 4px !important;
+    flex: 0 0 40% !important; /* narrower for iPad portrait */
+    max-width: 40% !important;
+    padding: 10px !important; /* reduced internal padding */
+    margin: 6px !important;
     box-sizing: border-box !important;
   }
   .main-container > div[style*="display:flex"] {
-    gap: 8px !important;
+    gap: 10px !important;
     justify-content: center !important;
+  }
+  /* Reduce inner content width so items inside the colored frames don't stretch too wide */
+  .main-container > div[style*="display:flex"] > div .file-input-wrapper {
+    max-width: 80% !important;
+    margin: 8px auto !important;
+    display: block !important;
+    box-sizing: border-box !important;
+  }
+  .main-container > div[style*="display:flex"] > div .file-input-label,
+  .main-container > div[style*="display:flex"] > div .file-input-label-correct,
+  .main-container > div[style*="display:flex"] > div .file-input-label-wrong {
+    max-width: 100% !important;
+    display: inline-block !important;
+    padding: 10px 14px !important;
+    font-size: 15px !important;
+  }
+  .main-container > div[style*="display:flex"] > div .image-preview-item {
+    width: 90px !important;
+    height: 90px !important;
+    margin: 8px auto !important;
   }
 }
 
 @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) {
   .main-container > div[style*="display:flex"] > div {
-    flex: 0 0 46% !important; /* make each panel narrower */
-    max-width: 46% !important;
-    padding: 10px !important; /* reduce internal padding */
-    margin: 4px !important;
+    flex: 0 0 40% !important; /* narrower for iPad landscape */
+    max-width: 40% !important;
+    padding: 10px !important; /* reduced internal padding */
+    margin: 6px !important;
     box-sizing: border-box !important;
   }
   .main-container > div[style*="display:flex"] {
-    gap: 8px !important;
+    gap: 10px !important;
     justify-content: center !important;
+  }
+  /* Reduce inner content width so items inside the colored frames don't stretch too wide */
+  .main-container > div[style*="display:flex"] > div .file-input-wrapper {
+    max-width: 80% !important;
+    margin: 8px auto !important;
+    display: block !important;
+    box-sizing: border-box !important;
+  }
+  .main-container > div[style*="display:flex"] > div .file-input-label,
+  .main-container > div[style*="display:flex"] > div .file-input-label-correct,
+  .main-container > div[style*="display:flex"] > div .file-input-label-wrong {
+    max-width: 100% !important;
+    display: inline-block !important;
+    padding: 10px 14px !important;
+    font-size: 15px !important;
+  }
+  .main-container > div[style*="display:flex"] > div .image-preview-item {
+    width: 90px !important;
+    height: 90px !important;
+    margin: 8px auto !important;
   }
 }
 @media (min-width: 1025px) {
