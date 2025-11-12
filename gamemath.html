@@ -184,7 +184,7 @@ body::before {
   </div>
 
   <div id="zones">
-    <div id="correctZone" class="zone">ลากใส่ที่นี่ ✅</div>
+    <div id="correctZone" class="zone">ใส่คำตอบถูกในช่อง</div>
   </div>
   
   <p id="scoreDisplay">Score: <span id="score">0</span></p>
@@ -285,22 +285,18 @@ function playSlideTone(freqStart, freqEnd) {
 }
 
 // สร้างคำตอบที่ลากได้
-function createDraggableAnswer(answerText, answerId, isCorrect) {
+function createDraggableAnswer(answerText, answerId, isCorrect, optStartX, optStartY) {
   if (createdAnswers[answerId]) return;
 
   const answerDiv = document.createElement('div');
   answerDiv.classList.add('answer-item');
   answerDiv.textContent = answerText;
 
-  // คำนวณจำนวนคำตอบที่สร้างแล้ว
-  const answerCount = Object.keys(createdAnswers).length;
-  const answerWidth = 120; // ความกว้างของแต่ละคำตอบ
-  const spacing = 20; // ระยะห่างระหว่างคำตอบ
-  
-  // วางคำตอบเรียงกันด้านล่าง
-  const startX = (window.innerWidth / 2) - ((answerCount * (answerWidth + spacing)) / 2) + (answerCount * (answerWidth + spacing));
-  const startY = window.innerHeight - 250; // ห่างจากด้านล่าง 250px
-  
+  // If provided, use explicit start positions (from loadQuestion layout planner)
+  const answerWidth = 120; // ความกว้างของแต่ละคำตอบ (used for fallback)
+  const startX = (typeof optStartX === 'number') ? optStartX : (50 + Math.random() * (window.innerWidth - 200));
+  const startY = (typeof optStartY === 'number') ? optStartY : (window.innerHeight - 250); // ห่างจากด้านล่าง 250px
+
   answerDiv.style.left = `${startX}px`;
   answerDiv.style.top = `${startY}px`;
   answerDiv.style.transform = 'none';
@@ -392,7 +388,7 @@ function nextQuestion() {
     if (score === allQuestions.length) {
       endGame('🎉 ผ่านทุกข้อ!', '#4CAF50');
     } else {
-      endGame('✅ จบเกม', '#FF9800');
+      endGame('✅ จบกิจกรรม', '#FF9800');
     }
   } else {
     // โหลดโจทย์ถัดไป
@@ -448,10 +444,38 @@ function loadQuestion(index) {
   
   // สุ่มลำดับคำตอบ
   allAnswers.sort(() => Math.random() - 0.5);
-  
-  // สร้างคำตอบแต่ละข้อ
-  allAnswers.forEach(answer => {
-    createDraggableAnswer(answer.text, answer.id, answer.isCorrect);
+
+  // Layout planner: compute non-overlapping start positions for all answers
+  const answerWidth = 120;
+  const answerHeight = 220; // increased height to provide more vertical space between rows
+  const hSpacing = 64; // increased horizontal spacing (doubled) to avoid overlap
+  const vSpacing = 40; // vertical spacing between rows (doubled)
+  const total = allAnswers.length;
+
+  // available width with small horizontal margins
+  const margin = 24;
+  const availableWidth = Math.max(200, window.innerWidth - margin * 2);
+
+  // how many columns can fit
+  const maxCols = Math.max(1, Math.floor((availableWidth + hSpacing) / (answerWidth + hSpacing)));
+  const cols = Math.min(total, maxCols);
+  const rows = Math.ceil(total / cols);
+
+  // compute baseX centered for the number of columns
+  const rowTotalWidth = cols * answerWidth + (cols - 1) * hSpacing;
+  let baseX = (window.innerWidth - rowTotalWidth) / 2;
+  baseX = Math.max(margin, baseX);
+
+  // start from lower area but allow multiple rows upwards
+  const bottomY = window.innerHeight - 160; // baseline from bottom
+
+  // สร้างคำตอบแต่ละข้อ โดยส่งตำแหน่งเริ่มต้นที่คำนวณแล้ว (multi-row)
+  allAnswers.forEach((answer, i) => {
+    const row = Math.floor(i / cols);
+    const col = i % cols;
+    const x = baseX + col * (answerWidth + hSpacing);
+    const y = bottomY - row * (answerHeight + vSpacing);
+    createDraggableAnswer(answer.text, answer.id, answer.isCorrect, x, y);
   });
 }
 

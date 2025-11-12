@@ -385,6 +385,36 @@ button { cursor:pointer; }
     width: 150px;
   }
 }
+
+/* iPad / large tablet adjustments (reduce size of the green/red panels) */
+/* apply on large tablets in both portrait and landscape explicitly */
+@media (min-width: 768px) and (max-width: 1366px) and (orientation: portrait) {
+  .main-container > div[style*="display:flex"] > div {
+    flex: 0 0 46% !important; /* make each panel narrower */
+    max-width: 46% !important;
+    padding: 10px !important; /* reduce internal padding */
+    margin: 4px !important;
+    box-sizing: border-box !important;
+  }
+  .main-container > div[style*="display:flex"] {
+    gap: 8px !important;
+    justify-content: center !important;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) {
+  .main-container > div[style*="display:flex"] > div {
+    flex: 0 0 46% !important; /* make each panel narrower */
+    max-width: 46% !important;
+    padding: 10px !important; /* reduce internal padding */
+    margin: 4px !important;
+    box-sizing: border-box !important;
+  }
+  .main-container > div[style*="display:flex"] {
+    gap: 8px !important;
+    justify-content: center !important;
+  }
+}
 @media (min-width: 1025px) {
   .info-inputs input:nth-child(1) {
     width: 120px;
