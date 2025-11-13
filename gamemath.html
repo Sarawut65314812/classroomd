@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
 body { 
   font-family: 'Roboto', sans-serif; 
@@ -194,9 +195,15 @@ body::before {
 <div id="scorePopup">
   <p style="font-size:20px; font-weight:600; margin-bottom:8px; color:#555;">สาระการเรียนรู้: <span id="topicDisplay"></span></p>
   <p style="font-size:24px; font-weight:600; margin-bottom:10px; color:#666;">ชื่อ: <span id="playerNameDisplay"></span></p>
+  <p style="font-size:14px; margin-bottom:15px; color:#888;">ครั้งที่ <span id="playCountDisplay">1</span></p>
   <p id="resultMessage" style="font-size:28px; font-weight:700; margin-bottom:15px;"></p>
   <p>🎉 คะแนน: <span id="finalScore"></span> 🎉</p>
-  <button class="neon-btn" onclick="closePopup()">Close</button>
+  <div style="display:flex; gap:10px; justify-content:center; margin-top:15px; flex-wrap:wrap;">
+    <button class="neon-btn" onclick="playAgain()" style="font-size:24px; padding:12px 14px; min-height:48px; width:48px; display:flex; align-items:center; justify-content:center; background:#57e167; border:none;" title="ทดสอบอีกครั้ง">🔁</button>
+    <button class="neon-btn" onclick="shareScore()" style="font-size:24px; padding:12px 14px; min-height:48px; width:48px; display:flex; align-items:center; justify-content:center; background:#3498db; border:none;" title="แชร์">🔗</button>
+    <button class="neon-btn" onclick="exportToPDF()" style="font-size:24px; padding:12px 14px; min-height:48px; width:48px; display:flex; align-items:center; justify-content:center; background:#f39c12; border:none;" title="Export PDF">📄</button>
+    <button class="neon-btn" onclick="closePopup()" style="font-size:24px; padding:12px 14px; min-height:48px; width:48px; display:flex; align-items:center; justify-content:center; background:#e74c3c; border:none;" title="ปิด">✕</button>
+  </div>
 </div>
 
 <script>
@@ -207,6 +214,7 @@ let score = 0;
 let gameStarted = false;
 let currentQuestionIndex = 0;
 let allQuestions = [];
+let playCount = 1; // นับจำนวนครั้งที่เล่น
 
 // โหลด config จาก localStorage
 let teacherConfig = JSON.parse(localStorage.getItem('emojiGameConfig') || '{}');
@@ -400,6 +408,7 @@ function nextQuestion() {
 function endGame(message, color) {
   document.getElementById('topicDisplay').innerText = teacherConfig.topic || 'ไม่ระบุ';
   document.getElementById('playerNameDisplay').innerText = teacherConfig.playerName || 'ไม่ระบุชื่อ';
+  document.getElementById('playCountDisplay').innerText = playCount; // แสดงจำนวนครั้ง
   document.getElementById('resultMessage').innerText = message;
   document.getElementById('resultMessage').style.color = color;
   document.getElementById('finalScore').innerText = `${score}/${allQuestions.length}`;
@@ -415,6 +424,268 @@ function checkEndGame() {
 
 function closePopup() {
   document.getElementById('scorePopup').style.display = 'none';
+}
+
+function shareScore() {
+  const date = new Date();
+  const dateStr = date.toLocaleDateString('th-TH');
+  const timeStr = date.toLocaleTimeString('th-TH');
+  const percentageScore = Math.min(100, Math.round((score / allQuestions.length) * 100));
+  
+  // กำหนดระดับผลการประเมิน
+  let grade = '';
+  if (percentageScore >= 80) {
+    grade = 'ดีเยี่ยม';
+  } else if (percentageScore >= 60) {
+    grade = 'ดี';
+  } else if (percentageScore >= 40) {
+    grade = 'พอใจ';
+  } else {
+    grade = 'ต้องปรับปรุง';
+  }
+  
+  const opt = {
+    margin: [12, 12, 12, 12],
+    filename: `${teacherConfig.topic || 'score'}_${date.toISOString().split('T')[0]}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2 },
+    jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+  };
+
+  const pdfContent = `
+    <div style="font-family: 'Arial', sans-serif; color: #333;">
+      <!-- Header with Logo Style -->
+      <div style="text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+        <h1 style="margin: 5px 0; font-size: 24px;">📊 รายงานผลการประเมิน</h1>
+        <p style="margin: 5px 0; font-size: 14px;">Smart Classroom Learning System</p>
+      </div>
+
+      <!-- Score Card - Main Focus -->
+      <div style="background: #f8f9fa; border: 3px solid #667eea; border-radius: 10px; padding: 20px; margin-bottom: 20px; text-align: center;">
+        <p style="font-size: 16px; margin: 0 0 15px 0; color: #555;"><strong>คะแนนที่ได้รับ</strong></p>
+        <div style="display: flex; gap: 15px; justify-content: center;">
+          <div style="flex: 1; background: white; border-radius: 8px; padding: 15px; border: 2px solid #27ae60;">
+            <p style="font-size: 28px; color: #27ae60; font-weight: bold; margin: 0;">${score}/${allQuestions.length}</p>
+            <p style="font-size: 12px; color: #666; margin: 5px 0 0 0;">คะแนน</p>
+          </div>
+          <div style="flex: 1; background: white; border-radius: 8px; padding: 15px; border: 2px solid #f39c12;">
+            <p style="font-size: 28px; color: #f39c12; font-weight: bold; margin: 0;">${grade}</p>
+            <p style="font-size: 12px; color: #666; margin: 5px 0 0 0;">ระดับ</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Attempt Info -->
+      <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 12px; margin-bottom: 20px; border-radius: 4px;">
+        <p style="margin: 0; font-size: 14px;"><strong>📍 ครั้งที่ ${playCount}</strong> - จำนวนครั้งที่เล่น/ทดสอบ</p>
+      </div>
+
+      <!-- Course Info -->
+      <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+        <p style="font-size: 14px; font-weight: bold; margin: 0 0 10px 0; color: #667eea;">ข้อมูลบทเรียน</p>
+        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+          <tr>
+            <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สัปดาห์ที่:</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.week || '-'}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สาระการเรียน:</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.topic || '-'}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">หน่วยการเรียน:</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.unit || '-'}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ครูผู้รับผิดชอบ:</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.teacher || '-'}</td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- Student Info -->
+      <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+        <p style="font-size: 14px; font-weight: bold; margin: 0 0 10px 0; color: #667eea;">ข้อมูลผู้เรียน</p>
+        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+          <tr>
+            <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ชื่อผู้เรียน:</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.playerName || '-'}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">วันที่:</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">${dateStr}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">เวลา:</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">${timeStr}</td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- Footer -->
+      <div style="text-align: center; border-top: 2px solid #ddd; padding-top: 15px; margin-top: 20px; color: #999; font-size: 11px;">
+        <p style="margin: 5px 0;">เอกสารนี้เป็นการรายงานผลการประเมินอย่างเป็นทางการ</p>
+        <p style="margin: 5px 0;">Smart Classroom Learning Management System</p>
+        <p style="margin: 5px 0; color: #bbb;">📄 สร้างเมื่อ ${date.toISOString()}</p>
+      </div>
+    </div>
+  `;
+
+  const element = document.createElement('div');
+  element.innerHTML = pdfContent;
+  
+  // สร้าง PDF แล้วแชร์
+  html2pdf().set(opt).from(element).output('blob').then(blob => {
+    // สร้าง File object
+    const file = new File([blob], opt.filename, { type: 'application/pdf' });
+    
+    // ตรวจสอบว่าสามารถแชร์ได้หรือไม่
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({
+        files: [file],
+        title: 'Smart Classroom - ผลการทดสอบ',
+        text: `ผลการทดสอบ: ${score}/${allQuestions.length}`
+      }).catch(err => console.log('Error sharing:', err));
+    } else {
+      // Fallback: ดาวน์โหลดแทน
+      html2pdf().set(opt).from(element).save();
+    }
+  });
+}
+
+function playAgain() {
+  // รีเซตเกม
+  Object.values(createdAnswers).forEach(div => div.remove());
+  createdAnswers = {};
+  score = 0;
+  currentQuestionIndex = 0;
+  playCount++; // เพิ่มจำนวนครั้ง
+  document.getElementById('score').innerText = score;
+  document.getElementById('scorePopup').style.display = 'none';
+  
+  // เล่นใหม่
+  initGame();
+}
+
+// ฟังก์ชัน Export PDF
+function exportToPDF() {
+  const date = new Date();
+  const dateStr = date.toLocaleDateString('th-TH');
+  const timeStr = date.toLocaleTimeString('th-TH');
+  const percentageScore = Math.min(100, Math.round((score / allQuestions.length) * 100));
+  
+  // กำหนดระดับผลการประเมิน
+  let grade = '';
+  if (percentageScore >= 80) {
+    grade = 'ดีเยี่ยม';
+  } else if (percentageScore >= 60) {
+    grade = 'ดี';
+  } else if (percentageScore >= 40) {
+    grade = 'พอใจ';
+  } else {
+    grade = 'ต้องปรับปรุง';
+  }
+  
+  const opt = {
+    margin: [12, 12, 12, 12],
+    filename: `${teacherConfig.topic || 'score'}_${date.toISOString().split('T')[0]}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2 },
+    jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+  };
+
+  // สร้าง HTML สำหรับ PDF ที่อ่านง่ายขึ้น
+  const pdfContent = `
+    <div style="font-family: 'Arial', sans-serif; color: #333;">
+      <!-- Header with Logo Style -->
+      <div style="text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+        <h1 style="margin: 5px 0; font-size: 24px;"> รายงานผลการประเมิน</h1>
+        <p style="margin: 5px 0; font-size: 14px;">Smart Classroom Learning System</p>
+      </div>
+
+      <!-- Score Card - Main Focus -->
+      <div style="background: #f8f9fa; border: 3px solid #667eea; border-radius: 10px; padding: 20px; margin-bottom: 20px; text-align: center;">
+        <p style="font-size: 16px; margin: 0 0 15px 0; color: #555;"><strong>คะแนนที่ได้รับ</strong></p>
+        <div style="display: flex; gap: 15px; justify-content: center;">
+          <div style="flex: 1; background: white; border-radius: 8px; padding: 15px; border: 2px solid #27ae60;">
+            <p style="font-size: 28px; color: #27ae60; font-weight: bold; margin: 0;">${score}/${allQuestions.length}</p>
+            <p style="font-size: 12px; color: #666; margin: 5px 0 0 0;">คะแนน</p>
+          </div>
+          <div style="flex: 1; background: white; border-radius: 8px; padding: 15px; border: 2px solid #f39c12;">
+            <p style="font-size: 28px; color: #f39c12; font-weight: bold; margin: 0;">${grade}</p>
+            <p style="font-size: 12px; color: #666; margin: 5px 0 0 0;">ระดับ</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Attempt Info -->
+      <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 12px; margin-bottom: 20px; border-radius: 4px;">
+        <p style="margin: 0; font-size: 14px;"><strong>ครั้งที่ ${playCount}</strong> - จำนวนครั้งที่เล่น/ทดสอบ</p>
+      </div>
+
+      <!-- Course Info -->
+      <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+        <p style="font-size: 14px; font-weight: bold; margin: 0 0 10px 0; color: #667eea;">ข้อมูลบทเรียน</p>
+        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+          <tr>
+            <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สัปดาห์ที่:</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.week || '-'}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สาระการเรียน:</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.topic || '-'}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">หน่วยการเรียน:</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.unit || '-'}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ครูผู้รับผิดชอบ:</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.teacher || '-'}</td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- Student Info -->
+      <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+        <p style="font-size: 14px; font-weight: bold; margin: 0 0 10px 0; color: #667eea;">ข้อมูลผู้เรียน</p>
+        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+          <tr>
+            <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ชื่อผู้เรียน:</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.playerName || '-'}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">วันที่:</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">${dateStr}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">เวลา:</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">${timeStr}</td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- Footer -->
+      <div style="text-align: center; border-top: 2px solid #ddd; padding-top: 15px; margin-top: 20px; color: #999; font-size: 11px;">
+        <p style="margin: 5px 0;">เอกสารนี้เป็นการรายงานผลการประเมินอย่างเป็นทางการ</p>
+        <p style="margin: 5px 0;">Smart Classroom Learning Management System</p>
+        <p style="margin: 5px 0; color: #bbb;">สร้างเมื่อ ${date.toISOString()}</p>
+      </div>
+
+      <!-- Signature Section -->
+      <div style="margin-top: 30px; padding: 0 20px; text-align: right;">
+        <div style="margin-top: 30px; padding: 0 20px; text-align: right;">
+        <p style="margin: 0 0 0 0; font-size: 10px; color: #333;">ลงชื่อ ___________________</p>
+        <p style="margin: 5px 0 0 0; font-size: 10px; color: #333;">ครูผู้รับผิดชอบ</p>
+        <p style="margin: 2px 0 0 0; font-size: 10px; color: #333;">(_____________________)</p>
+      </div>
+    </div>
+  `;
+
+  // ใช้ html2pdf
+  const element2 = document.createElement('div');
+  element2.innerHTML = pdfContent;
+  html2pdf().set(opt).from(element2).save();
 }
 
 // โหลดโจทย์
