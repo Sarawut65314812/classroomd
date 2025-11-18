@@ -203,18 +203,23 @@ button { cursor:pointer; }
   object-fit: contain;
 }
 .image-preview-item .remove-btn {
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  background: #f44336;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 25px;
-  height: 25px;
-  cursor: pointer;
-  font-size: 16px;
-  line-height: 1;
+  position: absolute !important;
+  top: 5px !important;
+  right: 5px !important;
+  background: none !important;
+  color: #f44336 !important;
+  border: 1.5px solid #f44336 !important;
+  border-radius: 4px !important;
+  width: 28px !important;
+  height: 28px !important;
+  font-size: 22px !important;
+  line-height: 1 !important;
+  padding: 2px 0 0 0 !important;
+  box-shadow: none !important;
+  font-weight: bold !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 .file-input-wrapper {
   position: relative;
@@ -540,7 +545,8 @@ button { cursor:pointer; }
 }
 
 /* iPad Pro 13-inch adjustments based on teachermatch.html */
-@media (min-width: 1366px) and (max-width: 1366px) {
+@media (min-width: 1366px) and (max-width: 1024px) {
+
   .main-container {
     max-width: 85% !important;
     width: 85% !important;
@@ -626,10 +632,48 @@ button { cursor:pointer; }
     box-sizing: border-box !important; /* Ensure proper sizing */
   }
 }
+.small-activity-btn {
+  font-size:13px !important;
+  padding:7px 18px !important;
+  min-height:32px !important;
+  max-width:180px !important;
+  border-width:3px !important;
+  border-radius:18px !important;
+  box-shadow:1px 1px 0 #000,-4px 3px #3b3305,0 0 10px rgba(255,230,160,0.35) !important;
+}
+.large-activity-btn {
+  font-size:18px !important;
+  padding:16px 40px !important;
+  min-height:48px !important;
+  max-width:320px !important;
+  border-width:6px !important;
+  border-radius:32px !important;
+  box-shadow:2px 2px 0 #000,-8px 6px #3b3305,0 0 20px rgba(255,230,160,0.55) !important;
+}
+
+#activityListModal button[onclick*="closeActivityListModal"] {
+  background: none !important;
+  color: #222 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  width: auto !important;
+  height: auto !important;
+  font-size: 32px !important;
+  line-height: 1 !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  font-weight: bold !important;
+  position: absolute !important;
+  top: 12px !important;
+  right: 12px !important;
+}
 </style>
 </head>
 <body>
 
+<div style="width:100%;display:flex;justify-content:flex-start;align-items:center;margin-bottom:8px;">
+  <button class="neon-btn large-activity-btn" id="openActivityListBtn" style="margin-left:780px;">เลือกกิจกรรมที่บันทึกไว้</button>
+</div>
 <div class="info-section">
   <h3>กรอกข้อมูลกิจกรรม</h3>
   <div class="info-inputs">
@@ -641,11 +685,12 @@ button { cursor:pointer; }
 </div>
 
 <div class="main-container">
+
   <!-- ลบ section โจทย์เลขและคำตอบคณิตศาสตร์ออก เหลือเฉพาะกรอบอัพโหลดรูปภาพ -->
   <h3 style="margin-top:40px;">เพิ่มรูปภาพ</h3>
   <input id="mainTopicInput" placeholder="หัวข้อกิจกรรม/หมวดหมู่" style="max-width:500px; font-size:18px; padding:12px; border-radius:15px; margin-bottom:20px; background:#fff; border:2px solid #ccc; box-shadow:none; color:#333;"><br>
   <div style="display:flex; gap:5px; justify-content:center; margin-top:20px;">
-  <div style="flex:1 1 calc(50% - 12px); max-width:calc(50% - 12px); background:rgba(76, 175, 80, 0.1); padding:12px; border-radius:10px; border:2px solid #4CAF50;">
+    <div style="flex:1 1 calc(50% - 12px); max-width:calc(50% - 12px); background:rgba(76, 175, 80, 0.1); padding:12px; border-radius:10px; border:2px solid #4CAF50;">
       <label style="color:#4CAF50; font-weight:bold;">รูปที่ถูกต้อง ✅</label><br>
       <div class="file-input-wrapper" style="margin-top:10px;">
         <label class="file-input-label file-input-label-correct">เลือกภาพ
@@ -654,7 +699,7 @@ button { cursor:pointer; }
       </div>
       <div id="correctImagesList" style="margin-top:10px;"></div>
     </div>
-  <div style="flex:1 1 calc(50% - 12px); max-width:calc(50% - 12px); background:rgba(244, 67, 54, 0.1); padding:12px; border-radius:10px; border:2px solid #f44336;">
+    <div style="flex:1 1 calc(50% - 12px); max-width:calc(50% - 12px); background:rgba(244, 67, 54, 0.1); padding:12px; border-radius:10px; border:2px solid #f44336;">
       <label style="color:#f44336; font-weight:bold;">รูปที่ผิด ❌</label><br>
       <div class="file-input-wrapper" style="margin-top:10px;">
         <label class="file-input-label file-input-label-wrong">เลือกภาพ
@@ -665,13 +710,23 @@ button { cursor:pointer; }
     </div>
   </div>
 </div>
+  <button class="neon-btn" id="saveActivityBtn" style="background:#e0eaff;">บันทึกกิจกรรม</button>
   <button class="neon-btn" onclick="saveConfig()">เริ่มกิจกรรม</button>
+
+  <!-- Popup Modal สำหรับรายการกิจกรรม -->
+  <div id="activityListModal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.25);z-index:9999;align-items:center;justify-content:center;">
+    <div style="background:#fffef8;border-radius:18px;max-width:420px;width:90vw;padding:28px 18px;box-shadow:0 8px 32px rgba(0,0,0,0.18);border:2px solid #74640a;position:relative;">
+      <h3 style="margin-top:0;margin-bottom:18px;color:#74640a;text-align:center;">เลือกกิจกรรมที่บันทึกไว้</h3>
+      <ul id="activityList" style="padding-left:0;margin:0;list-style:none;"></ul>
+      <button onclick="closeActivityListModal()" style="position:absolute;top:12px;right:12px;background:#f44336;color:#fff;border:none;border-radius:50%;width:32px;height:32px;font-size:20px;cursor:pointer;">×</button>
+    </div>
+  </div>
+  
 
 <script>
 let correctImages = [];
 let wrongImages = [];
-
-
+let editingActivityIdx = null;
 
 // ฟังก์ชันจัดการรูปภาพที่อัปโหลด
 function handleImageUpload(event, type) {
@@ -806,17 +861,10 @@ function renderImages(type) {
 // โหลด config เก่าถ้ามี
 const savedConfig = JSON.parse(localStorage.getItem('emojiGameConfig')||'{}');
 if(savedConfig.topic) document.getElementById('topicInput').value = savedConfig.topic;
-if(savedConfig.date) document.getElementById('dateInput').value = savedConfig.date;
 if(savedConfig.correctImages) correctImages = savedConfig.correctImages;
 if(savedConfig.wrongImages) wrongImages = savedConfig.wrongImages;
 renderImages('correct');
 renderImages('wrong');
-
-// ตั้งค่าวันที่เป็นวันปัจจุบันถ้ายังไม่มี
-if(!savedConfig.date) {
-  const today = new Date().toISOString().split('T')[0];
-  document.getElementById('dateInput').value = today;
-}
 
 function saveConfig(){
   const week = document.getElementById('weekInput')?.value.trim();
@@ -848,6 +896,120 @@ function saveConfig(){
 
   window.location.href='gamepicture.html';
 }
+
+// เพิ่มฟีเจอร์บันทึกกิจกรรมสำหรับครู (ใช้งานซ้ำ)
+document.getElementById('saveActivityBtn').onclick = function() {
+  const week = document.getElementById('weekInput')?.value.trim();
+  const topic = document.getElementById('topicInput')?.value.trim();
+  const unit = document.getElementById('unitInput')?.value.trim();
+  const teacher = document.getElementById('teacherInput')?.value.trim();
+  const mainTopic = document.getElementById('mainTopicInput')?.value.trim();
+  let items = JSON.parse(localStorage.getItem('teacherActivityList') || '[]');
+  if (editingActivityIdx !== null) {
+    items[editingActivityIdx] = {
+      week, topic, unit, teacher, mainTopic,
+      correctImages, wrongImages,
+      date: new Date().toISOString().split('T')[0],
+      time: new Date().toLocaleTimeString()
+    };
+    localStorage.setItem('teacherActivityList', JSON.stringify(items));
+    alert('อัปเดตกิจกรรมสำเร็จ!');
+    editingActivityIdx = null;
+    document.getElementById('saveActivityBtn').textContent = 'บันทึกกิจกรรม';
+    document.getElementById('saveActivityBtn').style.background = '#4CAF50'; // เขียว
+    document.getElementById('saveActivityBtn').style.color = '#fff';
+  } else {
+    items.push({
+      week, topic, unit, teacher, mainTopic,
+      correctImages, wrongImages,
+      date: new Date().toISOString().split('T')[0],
+      time: new Date().toLocaleTimeString()
+    });
+    localStorage.setItem('teacherActivityList', JSON.stringify(items));
+    alert('บันทึกกิจกรรมสำเร็จ!');
+    document.getElementById('saveActivityBtn').style.background = '#4CAF50'; // เขียว
+    document.getElementById('saveActivityBtn').style.color = '#fff';
+  }
+}
+
+// เพิ่มฟังก์ชันแสดงรายการกิจกรรมที่บันทึกไว้
+function renderActivityList() {
+  const list = document.getElementById('activityList');
+  const items = JSON.parse(localStorage.getItem('teacherActivityList') || '[]');
+  if (!list) return;
+  if (items.length === 0) {
+    list.innerHTML = '<li style="color:#aaa;text-align:center;">ยังไม่มีการบันทึกกิจกรรม</li>';
+    return;
+  }
+  list.innerHTML = items.map((item, idx) => `
+    <li style="margin-bottom:14px;display:flex;align-items:center;gap:10px;background:#fffbe6;border-radius:10px;padding:10px 12px;box-shadow:0 2px 8px rgba(255,230,160,0.08);">
+      <button onclick="playActivity(${idx})" style="flex:1;text-align:left;background:none;border:none;color:#333;font-size:16px;cursor:pointer;padding:0;">
+        <strong>กิจกรรมที่ ${idx+1}</strong>: สัปดาห์: ${item.week || '-'}, สาระ: ${item.topic || '-'}, หน่วย: ${item.unit || '-'}, ครู: ${item.teacher || '-'}, หมวดหมู่: ${item.mainTopic || '-'}
+        <span style='color:#888;font-size:12px;'> (${item.date || ''} ${item.time || ''})</span>
+      </button>
+      <button onclick="editActivity(${idx})" style="background:#2196f3;color:#fff;border:none;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:14px;margin-right:4px;">แก้ไข</button>
+      <button onclick="deleteActivity(${idx})" style="background:#f44336;color:#fff;border:none;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:14px;">ลบ</button>
+    </li>
+  `).join('');
+}
+function openActivityListModal() {
+  document.getElementById('activityListModal').style.display = 'flex';
+  renderActivityList();
+}
+function closeActivityListModal() {
+  document.getElementById('activityListModal').style.display = 'none';
+}
+// ฟังก์ชันเล่นกิจกรรมที่เลือก
+function playActivity(idx) {
+  const items = JSON.parse(localStorage.getItem('teacherActivityList') || '[]');
+  if (!items[idx]) return;
+  localStorage.setItem('emojiGameConfig', JSON.stringify(items[idx]));
+  window.location.href = 'gamepicture.html';
+}
+// ฟังก์ชันลบกิจกรรม
+function deleteActivity(idx) {
+  let items = JSON.parse(localStorage.getItem('teacherActivityList') || '[]');
+  if (!items[idx]) return;
+  if (!confirm('ต้องการลบกิจกรรมนี้ใช่หรือไม่?')) return;
+  items.splice(idx, 1);
+  localStorage.setItem('teacherActivityList', JSON.stringify(items));
+  renderActivityList();
+}
+// ฟังก์ชันแก้ไขกิจกรรม
+function editActivity(idx) {
+  const items = JSON.parse(localStorage.getItem('teacherActivityList') || '[]');
+  if (!items[idx]) return;
+  const item = items[idx];
+  document.getElementById('weekInput').value = item.week || '';
+  document.getElementById('topicInput').value = item.topic || '';
+  document.getElementById('unitInput').value = item.unit || '';
+  document.getElementById('teacherInput').value = item.teacher || '';
+  document.getElementById('mainTopicInput').value = item.mainTopic || '';
+  correctImages = item.correctImages || [];
+  wrongImages = item.wrongImages || [];
+  renderImages('correct');
+  renderImages('wrong');
+  editingActivityIdx = idx;
+  closeActivityListModal();
+  document.getElementById('saveActivityBtn').textContent = 'อัปเดตกิจกรรม';
+  document.getElementById('saveActivityBtn').style.background = '#FFD600'; // เหลือง
+  document.getElementById('saveActivityBtn').style.color = '#333';
+}
+
+// เรียกแสดงรายการกิจกรรมเมื่อเปิด modal
+if(document.getElementById('openActivityListBtn')){
+  document.getElementById('openActivityListBtn').addEventListener('click', openActivityListModal);
+}
+// อัปเดตรายการเมื่อบันทึกกิจกรรมใหม่
+if(document.getElementById('saveActivityBtn')){
+  document.getElementById('saveActivityBtn').addEventListener('click', renderActivityList);
+}
+
+document.getElementById('activityListModal').addEventListener('mousedown', function(e) {
+  if (e.target === this) {
+    closeActivityListModal();
+  }
+});
 </script>
 
 </body>
