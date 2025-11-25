@@ -227,13 +227,14 @@
           gap: clamp(1rem, 2.5vw, 2rem); /* เพิ่มช่องว่างแนวนอนระหว่างสองกล่อง (responsive) */
           justify-content: center; /* center the pair across the page */
           align-items: stretch;
-          width: 100%;
-          box-sizing: border-box;
-          margin: clamp(0.5rem, 1vw, 1rem) 0; /* small vertical spacing only */
+            width: 100%;
+            box-sizing: border-box;
+            /* Lift this row upward to sit closer under the top-bar */
+            margin: clamp(-6rem, -12vw, -4rem) 0 clamp(0.5rem, 1vw, 1rem);
 
-          /* Force a single row on all screen sizes so the two panels stay side-by-side */
-          flex-wrap: nowrap;
-          overflow: visible;
+            /* Force a single row on all screen sizes so the two panels stay side-by-side */
+            flex-wrap: nowrap;
+            overflow: visible;
         }
 
         /* Removed explicit sibling margin fallback; panels now use equal margins */
