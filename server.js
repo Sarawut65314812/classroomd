@@ -52,6 +52,132 @@ app.post('/uploadBase64', async (req, res) => {
   }
 })
 
+// --- Usage tracking endpoints (start / end / event) ---
+app.post('/api/usage/start', async (req, res) => {
+  try {
+    const { clientId, page, section, timestamp } = req.body || {}
+    const startAt = timestamp || new Date().toISOString()
+    const doc = {
+      client_id: clientId || null,
+      page: page || null,
+      section: section || null,
+      start_at: startAt,
+      end_at: null,
+      durationMs: null,
+      created_at: new Date().toISOString()
+    }
+    let usageId = 'local-' + Date.now()
+    // Prefer per-page collection
+    const pageColl = getPageUsageColl(page)
+    if (pageColl) {
+      const r = await pageColl.insertOne(doc)
+      usageId = r.insertedId.toString()
+    } else if (usageColl) {
+      const r = await usageColl.insertOne(doc)
+      usageId = r.insertedId.toString()
+    }
+    // Append to per-page file log as well
+    appendUsageLog(page || 'unknown', Object.assign({ type: 'start', usageId }, doc))
+    return res.json({ success: true, usageId, doc })
+  } catch (e) {
+    console.error('[ERROR] /api/usage/start', e)
+    res.status(500).json({ success: false, message: 'failed to start usage' })
+  }
+})
+
+app.post('/api/usage/end', async (req, res) => {
+  try {
+    const { usageId, clientId, page, section, timestamp } = req.body || {}
+    const endAt = timestamp || new Date().toISOString()
+    // Try to close by usageId in provided page collection first
+    const pageColl = getPageUsageColl(page)
+    if (usageId && pageColl) {
+      try {
+        const { ObjectId } = require('mongodb')
+        const oId = new ObjectId(usageId)
+        const doc = await pageColl.findOne({ _id: oId })
+        if (doc) {
+          const startMs = new Date(doc.start_at).getTime()
+          const endMs = new Date(endAt).getTime()
+          const durationMs = Math.max(0, endMs - startMs)
+          await pageColl.updateOne({ _id: doc._id }, { $set: { end_at: endAt, durationMs } })
+          // Append end entry to per-page log
+          appendUsageLog(page || doc.page || 'unknown', { type: 'end', usageId: doc._id.toString(), client_id: doc.client_id || clientId || null, start_at: doc.start_at, end_at: endAt, durationMs, created_at: new Date().toISOString() })
+          return res.json({ success: true, usageId: doc._id.toString(), durationMs })
+        }
+      } catch (inner) {
+        console.error('[WARN] /api/usage/end parsing usageId in pageColl', inner && inner.message)
+      }
+    }
+
+    // Fallback: try provided page's open usage by clientId
+    if (pageColl && clientId && page) {
+      const doc = await pageColl.findOne({ client_id: clientId, page, section: section || null, end_at: null }, { sort: { start_at: -1 } })
+      if (doc) {
+        const startMs = new Date(doc.start_at).getTime()
+        const endMs = new Date(endAt).getTime()
+        const durationMs = Math.max(0, endMs - startMs)
+        await pageColl.updateOne({ _id: doc._id }, { $set: { end_at: endAt, durationMs } })
+        appendUsageLog(page || doc.page || 'unknown', { type: 'end', usageId: doc._id.toString(), client_id: clientId, start_at: doc.start_at, end_at: endAt, durationMs, created_at: new Date().toISOString() })
+        return res.json({ success: true, usageId: doc._id.toString(), durationMs })
+      }
+    }
+
+    // Final fallback: legacy global usageColl search
+    if (usageColl) {
+      if (usageId) {
+        try {
+          const { ObjectId } = require('mongodb')
+          const oId = new ObjectId(usageId)
+          const doc = await usageColl.findOne({ _id: oId })
+          if (doc) {
+            const startMs = new Date(doc.start_at).getTime()
+            const endMs = new Date(endAt).getTime()
+            const durationMs = Math.max(0, endMs - startMs)
+            await usageColl.updateOne({ _id: doc._id }, { $set: { end_at: endAt, durationMs } })
+            appendUsageLog(doc.page || page || 'unknown', { type: 'end', usageId: doc._id.toString(), client_id: doc.client_id || clientId || null, start_at: doc.start_at, end_at: endAt, durationMs, created_at: new Date().toISOString() })
+            return res.json({ success: true, usageId: doc._id.toString(), durationMs })
+          }
+        } catch (inner) { console.error('[WARN] fallback usageColl parsing usageId', inner && inner.message) }
+      }
+      if (clientId && page) {
+        const doc = await usageColl.findOne({ client_id: clientId, page, section: section || null, end_at: null }, { sort: { start_at: -1 } })
+        if (doc) {
+          const startMs = new Date(doc.start_at).getTime()
+          const endMs = new Date(endAt).getTime()
+          const durationMs = Math.max(0, endMs - startMs)
+          await usageColl.updateOne({ _id: doc._id }, { $set: { end_at: endAt, durationMs } })
+          appendUsageLog(page || doc.page || 'unknown', { type: 'end', usageId: doc._id.toString(), client_id: clientId, start_at: doc.start_at, end_at: endAt, durationMs, created_at: new Date().toISOString() })
+          return res.json({ success: true, usageId: doc._id.toString(), durationMs })
+        }
+      }
+    }
+
+    return res.json({ success: true, message: 'no open usage found' })
+  } catch (e) {
+    console.error('[ERROR] /api/usage/end', e)
+    res.status(500).json({ success: false, message: 'failed to end usage' })
+  }
+})
+
+app.post('/api/usage/event', async (req, res) => {
+  try {
+    const { clientId, page, section, name, data, timestamp } = req.body || {}
+    const ts = timestamp || new Date().toISOString()
+    const doc = { client_id: clientId || null, page: page || null, section: section || null, name: name || null, data: data || null, timestamp: ts, created_at: new Date().toISOString() }
+    const pageColl = getPageUsageColl(page)
+    if (pageColl) await pageColl.insertOne(doc)
+    else if (usageColl) await usageColl.insertOne(doc)
+    // also append to per-page log
+    appendUsageLog(page || 'unknown', Object.assign({ type: 'event' }, doc))
+    return res.json({ success: true })
+  } catch (e) {
+    console.error('[ERROR] /api/usage/event', e)
+    res.status(500).json({ success: false, message: 'failed to record usage event' })
+  }
+})
+
+
 // In-memory storage
 const feedbackList = []
 
@@ -81,15 +207,52 @@ let mongoClient
 let dailyUsersColl
 let sessionsColl
 let feedbacksColl
+let usageColl
+let mdb
+const pageUsageColls = new Map()
+
+function safeCollectionNameForPage(page) {
+  // normalize page like '/gamemath' -> 'usage_gamemath'
+  const p = String(page || 'unknown')
+    .replace(/^\/+/, '') // remove leading slash
+    .replace(/[^a-zA-Z0-9-_]/g, '_')
+    .toLowerCase()
+  return `usage_${p || 'unknown'}`
+}
+
+function getPageUsageColl(page) {
+  try {
+    if (!mdb) return null
+    const cname = safeCollectionNameForPage(page)
+    if (pageUsageColls.has(cname)) return pageUsageColls.get(cname)
+    const coll = mdb.collection(cname)
+    // ensure useful indexes
+    coll.createIndex({ client_id: 1 }).catch(()=>{})
+    coll.createIndex({ start_at: 1 }).catch(()=>{})
+    coll.createIndex({ end_at: 1 }).catch(()=>{})
+    pageUsageColls.set(cname, coll)
+    return coll
+  } catch (e) {
+    console.error('[WARN] getPageUsageColl failed', e && e.message)
+    return null
+  }
+}
 try {
   mongoClient = new MongoClient(MONGODB_URI)
   await mongoClient.connect()
-  const mdb = mongoClient.db(MONGODB_DB)
+  mdb = mongoClient.db(MONGODB_DB)
   dailyUsersColl = mdb.collection('daily_users')
   // sessions collection for recording session durations
   sessionsColl = mdb.collection('sessions')
+  // usage events collection for per-page / per-section tracking
+  usageColl = mdb.collection('usage_events')
   feedbacksColl = mdb.collection('feedbacks')
   await sessionsColl.createIndex({ client_id: 1 })
+  if (usageColl) {
+    await usageColl.createIndex({ client_id: 1 })
+    await usageColl.createIndex({ page: 1 })
+    await usageColl.createIndex({ section: 1 })
+  }
   // ensure unique index on client_id + day
   await dailyUsersColl.createIndex({ client_id: 1, day: 1 }, { unique: true })
   // feedbacks: index for createdAt
@@ -100,6 +263,7 @@ try {
   // proceed without DB — recordDailyUser will be a no-op
   dailyUsersColl = null
   sessionsColl = null
+  usageColl = null
 }
 
 async function recordDailyUser(clientId) {
@@ -120,6 +284,20 @@ async function recordDailyUser(clientId) {
   } catch (e) {
     // ignore duplicate key or other transient errors
     console.error('[WARN] recordDailyUser failed', e && e.message)
+  }
+}
+
+// Helper: append usage record to per-page NDJSON file under data/usage/
+function appendUsageLog(page, record) {
+  try {
+    const usageDir = path.join(DATA_DIR, 'usage')
+    if (!fs.existsSync(usageDir)) fs.mkdirSync(usageDir, { recursive: true })
+    const safePage = String(page || 'unknown').replace(/[^a-zA-Z0-9-_\.]/g, '_').replace(/^_+/, '')
+    const outPath = path.join(usageDir, safePage + '.ndjson')
+    const line = JSON.stringify(record) + '\n'
+    fs.appendFileSync(outPath, line, { encoding: 'utf8' })
+  } catch (e) {
+    console.error('[WARN] appendUsageLog failed', e && e.message)
   }
 }
 
@@ -526,6 +704,72 @@ app.get('/status/daily-stats', async (req, res) => {
   }
 })
 
+// Summary: usage by page (counts + avg duration)
+app.get('/status/usage-by-page', async (req, res) => {
+  try {
+    if (!mdb) return res.json({ success: false, message: 'DB not available' })
+    const cols = await mdb.listCollections().toArray()
+    const usageCols = cols.map(c => c.name).filter(n => n && n.startsWith('usage_'))
+    const out = []
+    for (const name of usageCols) {
+      const coll = mdb.collection(name)
+      const agg = await coll.aggregate([
+        { $group: { _id: null, count: { $sum: 1 }, avgMs: { $avg: '$durationMs' }, withDuration: { $sum: { $cond: [{ $ifNull: ['$durationMs', false] }, 1, 0] } } } }
+      ]).toArray()
+      const row = (agg && agg[0]) || { count: 0, avgMs: 0, withDuration: 0 }
+      out.push({ collection: name, page: name.replace(/^usage_/, ''), count: row.count || 0, avgDurationMs: row.avgMs || 0, recordsWithDuration: row.withDuration || 0 })
+    }
+    res.json({ success: true, data: out, timestamp: new Date().toISOString() })
+  } catch (e) {
+    console.error('[ERROR] /status/usage-by-page', e)
+    res.status(500).json({ success: false, message: 'failed' })
+  }
+})
+
+// Summary by section for a given page
+app.get('/status/usage-by-section', async (req, res) => {
+  try {
+    const page = req.query.page || ''
+    if (!page) return res.json({ success: false, message: 'page required' })
+    const coll = getPageUsageColl(page) || usageColl
+    if (!coll) return res.json({ success: false, message: 'DB not available' })
+    const agg = await coll.aggregate([
+      { $group: { _id: '$section', count: { $sum: 1 }, avgMs: { $avg: '$durationMs' } } },
+      { $sort: { count: -1 } }
+    ]).toArray()
+    const out = agg.map(r => ({ section: r._id || 'unknown', count: r.count || 0, avgDurationMs: r.avgMs || 0 }))
+    res.json({ success: true, data: out, timestamp: new Date().toISOString() })
+  } catch (e) {
+    console.error('[ERROR] /status/usage-by-section', e)
+    res.status(500).json({ success: false, message: 'failed' })
+  }
+})
+
+// Recent usage records for a page (fallback to file tail if DB unavailable)
+app.get('/status/recent-usage', async (req, res) => {
+  try {
+    const page = req.query.page || ''
+    const limit = Math.min(200, parseInt(req.query.limit || '50', 10))
+    if (!page) return res.json({ success: false, message: 'page required' })
+    const coll = getPageUsageColl(page)
+    if (coll) {
+      const docs = await coll.find({}).sort({ created_at: -1 }).limit(limit).toArray()
+      return res.json({ success: true, data: docs, source: 'db', timestamp: new Date().toISOString() })
+    }
+    // fallback: read file
+    const usageDir = path.join(DATA_DIR, 'usage')
+    const safePage = String(page || 'unknown').replace(/[^a-zA-Z0-9-_\.]/g, '_').replace(/^_+/, '')
+    const outPath = path.join(usageDir, safePage + '.ndjson')
+    if (!fs.existsSync(outPath)) return res.json({ success: true, data: [], source: 'file', timestamp: new Date().toISOString() })
+    const content = fs.readFileSync(outPath, 'utf8').split('\n').filter(Boolean)
+    const tail = content.slice(-limit).reverse().map(l => { try { return JSON.parse(l) } catch(e){ return l } })
+    return res.json({ success: true, data: tail, source: 'file', timestamp: new Date().toISOString() })
+  } catch (e) {
+    console.error('[ERROR] /status/recent-usage', e)
+    res.status(500).json({ success: false, message: 'failed' })
+  }
+})
+
 // เสิร์ฟสคริปต์ client สำหรับเชื่อมต่อ Socket.IO และส่ง heartbeat
 app.get('/socket-client.js', (req, res) => {
   console.log(`[DEBUG] Serving /socket-client.js to ${req.ip || req.connection.remoteAddress}`);
@@ -540,6 +784,28 @@ app.get('/socket-client.js', (req, res) => {
       socket.on('connect', function(){ console.log('[DEBUG] socket-client connected', socket.id); sendHeartbeat(); socket.__heartbeatInterval = setInterval(sendHeartbeat, 10000); });
       socket.on('disconnect', function(reason){ console.log('[DEBUG] socket-client disconnected', reason); if(socket.__heartbeatInterval) clearInterval(socket.__heartbeatInterval); });
       socket.on('clientCount', function(count){ console.log('Active clients:', count); var el=document.getElementById('user-count'); if(el) el.textContent='จำนวนผู้ใช้งาน: '+count; });
+
+      // Usage tracker helper (auto-starts a usage record per page and records visibility changes)
+      function usageStart(page, section){ try{ var p = page||location.pathname; var payload={ clientId: clientId, page: p, section: section||null, timestamp: new Date().toISOString() }; return fetch('/api/usage/start',{ method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).then(r=>r.json()).then(function(res){ try{ if(res && res.usageId){ __usageCurrentByPage = __usageCurrentByPage || {}; __usageCurrentByPage[p] = res.usageId; } }catch(e){} return res }).catch(e=>{ console.warn('usage start failed', e); return null; }); }catch(e){console.warn('usageStart err',e);return null;} }
+      function usageEnd(usageId, page, section){ try{ var p = page||location.pathname; var id = usageId || ( (__usageCurrentByPage && __usageCurrentByPage[p]) ? __usageCurrentByPage[p] : null ); var payload={ usageId: id, clientId: clientId, page: p, section: section||null, timestamp: new Date().toISOString() }; return fetch('/api/usage/end',{ method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).then(r=>r.json()).then(function(res){ try{ if(id && __usageCurrentByPage && __usageCurrentByPage[p]===id) delete __usageCurrentByPage[p]; }catch(e){} return res }).catch(e=>{ console.warn('usage end failed', e); return null; }); }catch(e){console.warn('usageEnd err',e);return null;} }
+      function usageEvent(name, data, page, section){ try{ var p = page||location.pathname; var payload={ clientId: clientId, page: p, section: section||null, name: name, data: data||null, timestamp: new Date().toISOString() }; return fetch('/api/usage/event',{ method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).then(r=>r.json()).catch(e=>{ console.warn('usage event failed', e); return null; }); }catch(e){console.warn('usageEvent err',e);return null;} }
+
+      // Expose basic API for pages
+      window.usageTracker = {
+        start: usageStart,
+        end: usageEnd,
+        event: usageEvent
+      };
+
+      var __usageCurrentByPage = {};
+      function autoStart(){ usageStart(location.pathname, 'page'); }
+      function autoEnd(){ usageEnd(null, location.pathname, 'page'); }
+
+      document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'hidden'){ autoEnd(); } else { autoStart(); } });
+      window.addEventListener('beforeunload', function(){ try{ if(__usageCurrent){ var payload = JSON.stringify({ usageId: __usageCurrent, clientId: clientId, timestamp: new Date().toISOString() }); if(navigator.sendBeacon) { navigator.sendBeacon('/api/usage/end', payload); } else { navigator.fetch('/api/usage/end', { method: 'POST', headers: { 'Content-Type':'application/json' }, body: payload, keepalive: true }).catch(function(){}); } } }catch(e){} });
+
+      // start immediately
+      autoStart();
     }catch(e){ console.error('socket-client failed', e); }
   })();`)
 })

@@ -468,5 +468,24 @@ function closeActivityModal() {
 <!-- Socket client (connect + heartbeat) -->
 <script src="/socket.io/socket.io.js"></script>
 <script src="/socket-client.js"></script>
+<script>
+// เริ่ม/จบการบันทึกการใช้งานสำหรับหน้าครูตั้งค่า (teacherpicture)
+var __localUsageId_teacherpicture = null;
+window.addEventListener('load', function(){
+  try{
+    if (window.usageTracker && typeof window.usageTracker.start === 'function') {
+      __localUsageId_teacherpicture = window.usageTracker.start(location.pathname || 'teacherpicture.html', 'teacher-config');
+      console.log('usage started (teacherpicture)', __localUsageId_teacherpicture);
+    }
+  }catch(e){ console.warn('usage start failed', e); }
+});
+window.addEventListener('beforeunload', function(){
+  try{
+    if (window.usageTracker && typeof window.usageTracker.end === 'function') {
+      window.usageTracker.end(__localUsageId_teacherpicture, location.pathname, 'teacher-config');
+    }
+  }catch(e){}
+});
+</script>
 </body>
 </html>

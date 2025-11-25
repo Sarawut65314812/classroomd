@@ -100,6 +100,8 @@ const sparkleChars = ['✨', '🌟', '💫', '⭐'];
 let createdImages = {};
 let score = 0;
 let gameStarted = false;
+// usage tracking id for this page session
+let __localUsageId = null;
 
 // โหลด config จาก localStorage
 let teacherConfig = JSON.parse(localStorage.getItem('emojiGameConfig') || '{}');
@@ -442,6 +444,15 @@ function checkEndGame() {
     finalScore.innerText = score;
     resultMessage.innerText = score > 0 ? '🎉 ยินดีด้วย! คุณทำได้ดีมาก 🎉' : '😢 ลองใหม่อีกครั้งนะ 😢';
 
+    // Try to end usage for this page/section (if usageTracker available)
+    try {
+      if (window.usageTracker && typeof window.usageTracker.end === 'function') {
+        window.usageTracker.end(__localUsageId, location.pathname, 'gamepicture');
+      }
+    } catch (e) {
+      console.warn('usageTracker.end failed', e);
+    }
+
     // Show the popup
     popup.style.display = 'block';
   }
@@ -575,6 +586,26 @@ window.onload = function() {
 
   // Start the game automatically
   initGame();
+  // เริ่มบันทึกการใช้งานสำหรับหน้านี้ (ถ้ามี usageTracker) — เรียกใน window.onload เพื่อให้แน่ใจว่า /socket-client.js ถูกโหลดแล้ว
+  try {
+    if (window.usageTracker && typeof window.usageTracker.start === 'function') {
+      __localUsageId = window.usageTracker.start(location.pathname || 'gamepicture.html', teacherConfig.topic || 'gamepicture');
+      console.log('usage started', __localUsageId);
+    }
+  } catch (e) {
+    console.warn('usageTracker.start failed', e);
+  }
+
+  // ถ้าผู้ใช้ปิดหรือเปลี่ยนหน้า ให้พยายามส่ง end event
+  window.addEventListener('beforeunload', function() {
+    try {
+      if (window.usageTracker && typeof window.usageTracker.end === 'function') {
+        window.usageTracker.end(__localUsageId, location.pathname, 'gamepicture');
+      }
+    } catch (e) {
+      // ignore
+    }
+  });
 };
 </script>
 <!-- Socket client (connect + heartbeat) -->

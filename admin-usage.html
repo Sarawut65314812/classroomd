@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Admin — Usage Dashboard</title>
+<link rel="stylesheet" href="css/menu.css">
+<style>
+  body{font-family:Roboto,Arial,sans-serif;padding:20px;background:#fff}
+  h1{font-size:1.4rem}
+  .box{background:#fff;border:1px solid #ddd;padding:12px;border-radius:8px;margin-bottom:12px}
+  table{width:100%;border-collapse:collapse}
+  th,td{padding:8px;border-bottom:1px solid #eee;text-align:left}
+  pre{background:#f7f7f7;padding:8px;border-radius:6px}
+</style>
+</head>
+<body>
+<h1>Usage Dashboard</h1>
+<div class="box">
+  <label>เลือกหน้า: <select id="pageSelect"><option value="/gamemath">/gamemath</option><option value="/gamepicture">/gamepicture</option><option value="/gamethai">/gamethai</option><option value="/menu">/menu</option></select></label>
+  <button id="refresh">รีเฟรช</button>
+</div>
+<div class="box">
+  <h3>สรุปตามหน้า</h3>
+  <div id="summaryByPage">Loading…</div>
+</div>
+<div class="box">
+  <h3>สรุปตาม section (หน้าที่เลือก)</h3>
+  <div id="summaryBySection">Loading…</div>
+</div>
+<div class="box">
+  <h3>รายการล่าสุด (หน้าที่เลือก)</h3>
+  <div id="recentList">Loading…</div>
+</div>
+<script>
+async function loadSummaryByPage(){
+  const r = await fetch('/status/usage-by-page')
+  const j = await r.json()
+  const el = document.getElementById('summaryByPage')
+  if(!j.success){ el.innerText = 'ไม่สามารถดึงข้อมูลได้'; return }
+  const rows = j.data.map(d=>`<div><strong>${d.page}</strong>: ${d.count} records — avg ${(d.avgDurationMs||0).toFixed(0)} ms</div>`).join('')
+  el.innerHTML = rows
+}
+async function loadSummaryBySection(page){
+  const r = await fetch('/status/usage-by-section?page='+encodeURIComponent(page))
+  const j = await r.json()
+  const el = document.getElementById('summaryBySection')
+  if(!j.success){ el.innerText = 'ไม่สามารถดึงข้อมูลได้'; return }
+  const rows = j.data.map(d=>`<div><strong>${d.section}</strong>: ${d.count} — avg ${(d.avgDurationMs||0).toFixed(0)} ms</div>`).join('')
+  el.innerHTML = rows
+}
+async function loadRecent(page){
+  const r = await fetch('/status/recent-usage?page='+encodeURIComponent(page)+"&limit=50")
+  const j = await r.json()
+  const el = document.getElementById('recentList')
+  if(!j.success){ el.innerText = 'ไม่สามารถดึงข้อมูลได้'; return }
+  const rows = j.data.map(d=>`<div><pre>${JSON.stringify(d,null,2)}</pre></div>`).join('')
+  el.innerHTML = rows
+}
+function refresh(){
+  const page = document.getElementById('pageSelect').value
+  loadSummaryBySection(page)
+  loadRecent(page)
+}
+document.getElementById('refresh').addEventListener('click', refresh)
+// initial load
+loadSummaryByPage()
+refresh()
+</script>
+</body>
+</html>
