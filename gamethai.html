@@ -259,7 +259,7 @@ async function shareResult() {
     const dateStr = date.toLocaleDateString('th-TH');
     const timeStr = date.toLocaleTimeString('th-TH');
 
-    const opt = {
+   const opt = {
       margin: [12, 12, 12, 12],
       filename: `${teacherConfig.topic || 'score'}_${date.toISOString().split('T')[0]}.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
@@ -267,10 +267,11 @@ async function shareResult() {
       jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
     };
 
-    const pdfContent = `
+
+   const pdfContent = `
       <div style="font-family: 'Arial', sans-serif; color: #333;">
         <div style="text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-          <h1 style="margin: 5px 0; font-size: 24px;">รายงานผลการประเมิน</h1>
+          <h1 style="margin: 5px 0; font-size: 24px;">รายงานผลการประเมินกิจกรรมภาษา</h1>
           <p style="margin: 5px 0; font-size: 14px;">Smart Classroom Learning System</p>
           <p style="margin: 5px 0; font-size: 12px;">วันที่: ${dateStr} เวลา: ${timeStr}</p>
         </div>
@@ -299,7 +300,7 @@ async function shareResult() {
             </tr>
           </table>
         </div>
-        <div style="margin-top: 400px; text-align: center;">
+        <div style="margin-top: 300px; text-align: center;">
           <p style="margin: 0; font-size: 13px; color: #333;">ลงชื่อ _______________________</p>
           <p style="margin: 8px 0 0 0; font-size: 13px; color: #333;">ครูผู้รับผิดชอบ</p>
           <p style="margin: 5px 0 0 0; font-size: 13px; color: #333;">( _______________________ )</p>
@@ -345,15 +346,16 @@ function saveResult() {
     const pdfContent = document.createElement('div');
     pdfContent.innerHTML = `
       <div style="font-family: 'Arial', sans-serif; color: #333;">
+        <div style="text-align: center; margin-bottom: 12px;">
+          <img src='picture/Huaroa.jpg' alt='Logo' style='height: 120px; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;' />
+        </div>
+      <div style="font-family: 'Arial', sans-serif; color: #333;">
         <div style="text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-          <h1 style="margin: 5px 0; font-size: 24px;">รายงานผลการประเมิน</h1>
+          <h1 style="margin: 5px 0; font-size: 24px;">รายงานผลการประเมินกิจกรรมภาษา</h1>
           <p style="margin: 5px 0; font-size: 14px;">Smart Classroom Learning System</p>
           <p style="margin: 5px 0; font-size: 12px;">วันที่: ${dateStr} เวลา: ${timeStr}</p>
         </div>
-        <div style="background: #f8f9fa; border: 3px solid #667eea; border-radius: 10px; padding: 20px; margin-bottom: 20px; text-align: center;">
-          <p style="font-size: 16px; margin: 0 0 15px 0; color: #555;"><strong>คะแนนที่ได้รับ</strong></p>
-          <p style="font-size: 28px; color: #27ae60; font-weight: bold;">${correctAnswers}/${questions.length}</p>
-        </div>
+
         <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
           <p style="font-size: 14px; font-weight: bold; margin: 0 0 10px 0; color: #667eea;">ข้อมูลกิจกรรม</p>
           <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
@@ -375,7 +377,11 @@ function saveResult() {
             </tr>
           </table>
         </div>
-        <div style="margin-top: 400px; text-align: center;">
+          <div style="background: #f8f9fa; border: 3px solid #667eea; border-radius: 10px; padding: 20px; margin-bottom: 20px; text-align: center;">
+          <p style="font-size: 16px; margin: 0 0 15px 0; color: #555;"><strong>คะแนนที่ได้รับ</strong></p>
+          <p style="font-size: 28px; color: #27ae60; font-weight: bold;">${correctAnswers}/${questions.length}</p>
+        </div>
+        <div style="margin-top: 300px; text-align: center;">
           <p style="margin: 0; font-size: 13px; color: #333;">ลงชื่อ _______________________</p>
           <p style="margin: 8px 0 0 0; font-size: 13px; color: #333;">ครูผู้รับผิดชอบ</p>
           <p style="margin: 5px 0 0 0; font-size: 13px; color: #333;">( _______________________ )</p>
