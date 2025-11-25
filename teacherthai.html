@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>กิจกรรมภาษา</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/teacherthai.css">
+<style>
+/* เพิ่ม CSS สำหรับ responsive */
+@media (max-width: 768px) {
+  .form-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .form-group {
+    width: 100%;
+  }
+
+  .form-group label {
+    font-size: 14px;
+  }
+
+  .form-group input, .form-group textarea {
+    font-size: 16px;
+    padding: 10px;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>กิจกรรมภาษา</h1>
+  
+  <!-- ส่วนข้อมูลกิจกรรม -->
+  <div class="section">
+    <h2 class="section-title">กรอกข้อมูลกิจกรรม</h2>
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="weekInput">สัปดาห์ที่</label>
+        <input type="text" id="weekInput" placeholder="ระบุสัปดาห์">
+      </div>
+      <div class="form-group">
+        <label for="topicInput">สาระการเรียนรู้</label>
+        <input type="text" id="topicInput" placeholder="เช่น ภาษาไทย">
+      </div>
+      <div class="form-group">
+        <label for="unitInput">หน่วยการเรียนรู้</label>
+        <input type="text" id="unitInput" placeholder="ระบุชื่อหน่วยการเรียนรู้">
+      </div>
+      <div class="form-group">
+        <label for="teacherInput">ครูผู้สอบสอน</label>
+        <input type="text" id="teacherInput" placeholder="ชื่อครูผู้รับผิดชอบ">
+      </div>
+    </div>
+  </div>
+
+  <!-- ส่วนคำถาม -->
+  <div class="section">
+    <h2 class="section-title">คำถาม</h2>
+    
+    <div class="form-group" style="margin-bottom: 20px;">
+      <label for="questionInput">ข้อมูลคำถาม/หมวดหมู่</label>
+      <textarea id="questionInput" rows="2" placeholder="พิมพ์คำถาม..."></textarea>
+    </div>
+
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="choice1">คำตอบที่ถูก</label>
+        <input type="text" id="choice1" placeholder="คำตอบที่ 1" class="correct-choice">
+      </div>
+      <div class="form-group">
+        <label for="choice2">คำตอบที่ผิด</label>
+        <input type="text" id="choice2" placeholder="คำตอบที่ 2" class="wrong-choice">
+      </div>
+      <div class="form-group">
+        <label for="choice3">คำตอบที่ผิด</label>
+        <input type="text" id="choice3" placeholder="คำตอบที่ 3" class="wrong-choice">
+      </div>
+      <div class="form-group">
+        <label for="choice4">คำตอบที่ผิด</label>
+        <input type="text" id="choice4" placeholder="คำตอบที่ 4" class="wrong-choice">
+      </div>
+    </div>
+
+    <button class="neon-btn" onclick="addQuestion()" style="margin-top: 15px;">+ เพิ่มคำถาม</button>
+  </div>
+
+  <!-- รายการคำถาม -->
+  <div class="section">
+    <h2 class="section-title">รายการคำถามทั้งหมด</h2>
+    <div id="questionsList">
+      <div class="empty-state">ยังไม่มีคำถาม กรุณาเพิ่มคำถาม</div>
+    </div>
+  </div>
+
+  <!-- ปุ่มด้านล่าง -->
+  <div class="button-group">
+    <button class="neon-btn" onclick="startActivity()"> เริ่มกิจกรรม</button>
+    <button class="neon-btn" onclick="saveActivity()">บันทึกกิจกรรม</button>
+    <button class="neon-btn" onclick="loadActivity()">เลือกกิจกรรม</button>
+  </div>
+</div>
+
+<!-- Modal เลือกกิจกรรม -->
+<div id="activityModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 style="margin: 0; color: #251f03;">📂 เลือกกิจกรรมที่บันทึกไว้</h2>
+      <button class="close-btn" onclick="closeActivityModal()">×</button>
+    </div>
+    <div id="activityList"></div>
+  </div>
+</div>
+
+<script>
+// ฟังก์ชันเล่นกิจกรรมทันที (global)
+function playActivity(activityId) {
+  const savedActivities = JSON.parse(localStorage.getItem('savedActivities') || '[]');
+  const activity = savedActivities.find(a => a.id === activityId);
+  if (!activity) {
+    alert('ไม่พบกิจกรรมนี้');
+    return;
+  }
+  localStorage.setItem('thaiGameConfig', JSON.stringify(activity.config));
+  window.location.href = 'gamethai.html';
+}
+let allQuestions = [];
+
+function addQuestion() {
+  const question = document.getElementById('questionInput').value.trim();
+  const choice1 = document.getElementById('choice1').value.trim();
+  const choice2 = document.getElementById('choice2').value.trim();
+  const choice3 = document.getElementById('choice3').value.trim();
+  const choice4 = document.getElementById('choice4').value.trim();
+
+  if (!question || !choice1 || !choice2 || !choice3 || !choice4) {
+    alert('กรุณากรอกข้อมูลให้ครบทุกช่อง');
+    return;
+  }
+
+  const questionData = {
+    id: Date.now(),
+    question: question,
+    choices: [choice1, choice2, choice3, choice4],
+    correctIndex: 0 // คำตอบแรกถูกเสมอ
+  };
+
+  allQuestions.push(questionData);
+  renderQuestionsList();
+  
+  // Clear inputs
+  document.getElementById('questionInput').value = '';
+  document.getElementById('choice1').value = '';
+  document.getElementById('choice2').value = '';
+  document.getElementById('choice3').value = '';
+  document.getElementById('choice4').value = '';
+}
+
+function renderQuestionsList() {
+  const container = document.getElementById('questionsList');
+  
+  if (allQuestions.length === 0) {
+    container.innerHTML = '<div class="empty-state">ยังไม่มีคำถาม กรุณาเพิ่มคำถาม</div>';
+    return;
+  }
+
+  container.innerHTML = allQuestions.map((q, index) => `
+    <div class="question-item">
+      <div class="question-header">
+        <span class="question-number">คำถามที่ ${index + 1}</span>
+        <button class="delete-btn" onclick="deleteQuestion(${q.id})">🗑️ ลบ</button>
+      </div>
+      <div style="margin-bottom: 10px;"><strong>คำถาม:</strong> ${q.question}</div>
+      <div class="choices-grid">
+        ${q.choices.map((choice, i) => `
+          <div style="display: flex; align-items: center; gap: 5px;">
+            <span style="color: ${i === 0 ? '#27ae60' : '#e74c3c'}; font-weight: bold;">
+              ${i === 0 ? '✓' : '✗'}
+            </span>
+            <span>${choice}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function deleteQuestion(id) {
+  if (!confirm('ต้องการลบคำถามนี้หรือไม่?')) return;
+  allQuestions = allQuestions.filter(q => q.id !== id);
+  renderQuestionsList();
+}
+
+function startActivity() {
+  const week = document.getElementById('weekInput').value.trim();
+  const topic = document.getElementById('topicInput').value.trim();
+  const unit = document.getElementById('unitInput').value.trim();
+  const teacher = document.getElementById('teacherInput').value.trim();
+
+  if (!week || !topic || !unit || !teacher) {
+    alert('กรุณากรอกข้อมูลกิจกรรมให้ครบ');
+    return;
+  }
+
+  if (allQuestions.length === 0) {
+    alert('กรุณาเพิ่มคำถามอย่างน้อย 1 ข้อ');
+    return;
+  }
+
+  const config = {
+    week: week,
+    topic: topic,
+    unit: unit,
+    teacher: teacher,
+    questions: allQuestions
+  };
+
+  localStorage.setItem('thaiGameConfig', JSON.stringify(config));
+  window.location.href = 'gamethai.html';
+}
+
+function saveActivity() {
+  const week = document.getElementById('weekInput').value.trim();
+  const topic = document.getElementById('topicInput').value.trim();
+  const unit = document.getElementById('unitInput').value.trim();
+  const teacher = document.getElementById('teacherInput').value.trim();
+
+  if (!week || !topic || !unit || !teacher) {
+    alert('กรุณากรอกข้อมูลกิจกรรมให้ครบ');
+    return;
+  }
+
+  if (allQuestions.length === 0) {
+    alert('กรุณาเพิ่มคำถามอย่างน้อย 1 ข้อ');
+    return;
+  }
+
+  let savedActivities = JSON.parse(localStorage.getItem('savedActivities') || '[]');
+  
+  // ตรวจสอบว่ากำลังแก้ไขกิจกรรมเดิมหรือไม่
+  if (window.editingActivityId) {
+    const activity = savedActivities.find(a => a.id === window.editingActivityId);
+    
+    if (activity) {
+      activity.config = {
+        week: week,
+        topic: topic,
+        unit: unit,
+        teacher: teacher,
+        questions: allQuestions
+      };
+      activity.topic = topic;
+      activity.savedAtDisplay = new Date().toLocaleString('th-TH');
+      
+      localStorage.setItem('savedActivities', JSON.stringify(savedActivities));
+      
+      alert(`✅ อัพเดตกิจกรรม "${activity.name}" สำเร็จ!`);
+      
+      delete window.editingActivityId;
+      delete window.editingActivityName;
+      return;
+    }
+  }
+
+  const activityName = prompt('ตั้งชื่อกิจกรรม:', `${topic} - สัปดาห์ ${week}`);
+  
+  if (!activityName) return;
+  
+  const activity = {
+    id: Date.now(),
+    name: activityName,
+    type: 'thai',
+    topic: topic,
+    config: {
+      week: week,
+      topic: topic,
+      unit: unit,
+      teacher: teacher,
+      questions: allQuestions
+    },
+    savedAt: new Date().toISOString(),
+    savedAtDisplay: new Date().toLocaleString('th-TH')
+  };
+  
+  savedActivities.push(activity);
+  localStorage.setItem('savedActivities', JSON.stringify(savedActivities));
+  
+  alert(`✅ บันทึกกิจกรรม "${activityName}" สำเร็จ!`);
+}
+
+function loadActivity() {
+  const savedActivities = JSON.parse(localStorage.getItem('savedActivities') || '[]');
+  const thaiActivities = savedActivities.filter(a => a.type === 'thai');
+  
+  if (thaiActivities.length === 0) {
+    alert('ยังไม่มีกิจกรรมที่บันทึกไว้');
+    return;
+  }
+  
+  const activityList = document.getElementById('activityList');
+  activityList.innerHTML = thaiActivities.map(activity => `
+    <div style="background: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; border: 3px solid #74640a; transition: transform 0.2s;" 
+         onmouseover="this.style.transform='scale(1.02)'"
+         onmouseout="this.style.transform='scale(1)'">
+      <div style="display: flex; justify-content: space-between; align-items: start;">
+        <div style="flex: 1; cursor: pointer;" onclick="playActivity(${activity.id})">
+          <h3 style="margin: 0 0 8px 0; color: #333; font-size: 18px;">📚 ${activity.name}</h3>
+          <p style="margin: 4px 0; color: #666; font-size: 14px;">สาระ: ${activity.topic}</p>
+          <p style="margin: 4px 0; color: #999; font-size: 12px;">บันทึก: ${activity.savedAtDisplay}</p>
+          <p style="margin: 4px 0; color: #667eea; font-size: 14px; font-weight: 600;">จำนวนคำถาม: ${activity.config.questions?.length || 0} ข้อ</p>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button onclick="event.stopPropagation(); editActivity(${activity.id})" 
+                  style="background: #3498db; color: white; border: none; border-radius: 50%; width: 35px; height: 35px; cursor: pointer; font-size: 18px;">
+            ✏️
+          </button>
+          <button onclick="event.stopPropagation(); deleteActivity(${activity.id})" 
+                  style="background: #e74c3c; color: white; border: none; border-radius: 50%; width: 35px; height: 35px; cursor: pointer; font-size: 18px;">
+            🗑️
+          </button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+  
+  document.getElementById('activityModal').style.display = 'flex';
+}
+
+function selectActivity(activityId) {
+  const savedActivities = JSON.parse(localStorage.getItem('savedActivities') || '[]');
+  const activity = savedActivities.find(a => a.id === activityId);
+  
+  if (!activity) {
+    alert('ไม่พบกิจกรรมนี้');
+    return;
+  }
+  
+  const config = activity.config;
+  document.getElementById('weekInput').value = config.week || '';
+  document.getElementById('topicInput').value = config.topic || '';
+  document.getElementById('unitInput').value = config.unit || '';
+  document.getElementById('teacherInput').value = config.teacher || '';
+  
+  allQuestions = config.questions || [];
+  renderQuestionsList();
+  
+  closeActivityModal();
+  
+  alert(`✅ โหลดกิจกรรม "${activity.name}" สำเร็จ!`);
+}
+
+function editActivity(activityId) {
+  const savedActivities = JSON.parse(localStorage.getItem('savedActivities') || '[]');
+  const activity = savedActivities.find(a => a.id === activityId);
+  
+  if (!activity) {
+    alert('ไม่พบกิจกรรมนี้');
+    return;
+  }
+  
+  const config = activity.config;
+  document.getElementById('weekInput').value = config.week || '';
+  document.getElementById('topicInput').value = config.topic || '';
+  document.getElementById('unitInput').value = config.unit || '';
+  document.getElementById('teacherInput').value = config.teacher || '';
+  
+  allQuestions = config.questions || [];
+  renderQuestionsList();
+  
+  window.editingActivityId = activityId;
+  window.editingActivityName = activity.name;
+  
+  closeActivityModal();
+  
+  alert(`📝 กำลังแก้ไขกิจกรรม "${activity.name}"\n\nแก้ไขข้อมูลได้เลย แล้วกด "💾 บันทึกกิจกรรม" เพื่ออัพเดต`);
+}
+
+function deleteActivity(activityId) {
+  if (!confirm('ต้องการลบกิจกรรมนี้หรือไม่?')) return;
+  
+  let savedActivities = JSON.parse(localStorage.getItem('savedActivities') || '[]');
+  savedActivities = savedActivities.filter(a => a.id !== activityId);
+  localStorage.setItem('savedActivities', JSON.stringify(savedActivities));
+  
+  loadActivity();
+}
+
+function closeActivityModal() {
+  document.getElementById('activityModal').style.display = 'none';
+}
+</script>
+
+<!-- Socket client (connect + heartbeat) -->
+<script src="/socket.io/socket.io.js"></script>
+<script src="/socket-client.js"></script>
+</body>
+</html>

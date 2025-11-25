@@ -4,541 +4,562 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <link rel="stylesheet" href="css/menu.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
+        body {
+          font-family: 'Roboto', Helvetica, Arial, sans-serif;
+        }
+
+        .neon-btn, .running-text, .marquee span {
+          font-family: 'Roboto', Helvetica, Arial, sans-serif;
+          font-weight: 300; /* Light */
+        }
+
+        /* 🌈 พื้นหลังทั้งหน้า */
+        .root-bg {
+          position: relative;
+          overflow-x: visible;
+          min-height: 100vh;
+        }
+
+        .root-bg::before,
+        .root-bg::after {
+          content: '';
+          position: fixed;
+          top: 0; 
+          left: 0; 
+          right: 0; 
+          bottom: 0;
+          z-index: 0;
+          animation: floatBg 30s linear infinite;
+        }
+
+        .root-bg::before {
+          background: linear-gradient(to bottom, #ebd09e 0%, #251f03 100%);
+        }
+
+        .root-bg::after {
+          background: radial-gradient(circle at 30% 40%, #ebd09e, #251f03);
+        }
+
+        /* Animation */
+        /* Logo ลายน้ำ */
+        .background-image {
+          position: fixed;
+          top: 55%;
+          left: 75%;
+          transform: translate(-50%, -50%);
+          width: 90%;        /* ✅ ขยายจาก 60% */
+          max-width: 1400px; /* ✅ เพิ่มขนาดสูงสุด */
+          height: auto;
+          opacity: 0.3;
+          z-index: 1;
+          pointer-events: none;
+        }
+
+        .background-image img {
+          width: 100%;
+          height: auto;
+          object-fit: contain;
+          display: block;
+        }
+
+        /* Neon Button */
+        .neon-btn {
+          background: linear-gradient(180deg, #f8f6f0 0%, #fffef8 45%, #fff8e8 55%, #f5f0e5 100%);
+          color: #000000;
+          border: 6px solid #74640a;
+          border-radius: 9999px;
+          box-shadow: 1px 1px 0 #000, -8px 6px #3b3305, 0 0 20px rgba(255,230,160,0.55);
+          font-weight: 700;
+          font-size: clamp(1rem, 2vw, 1.5rem);
+          text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3), 0 -1px 0 rgba(0, 0, 0, 0.1);
+          position: relative;
+          padding: clamp(14px, 2.5vw, 20px) clamp(35px, 5vw, 50px);
+          transform: translateZ(0);
+          transition: all 0.3s ease;
+          z-index: 10;
+          min-height: 55px;
+        }
+
+        /* Running Text */
+        .running-text {
+          background: linear-gradient(180deg, #f8f6f0 0%, #fff8e8 50%, #f5f0e5 100%);
+          color: #000;
+          border: clamp(4px, 0.5vw, 6px) solid #74640a;
+          border-radius: 9999px;
+          font-weight: 700;
+          text-transform: uppercase;
+          padding: clamp(10px, 1.5vw, 15px) clamp(16px, 2vw, 20px);
+          box-shadow: 1px 1px 0 #000, clamp(-6px, -0.8vw, -8px) clamp(4px, 0.6vw, 6px) #3b3305, 0 0 20px rgba(255,230,160,0.55);
+          text-shadow: 0 1px 0 rgba(255,255,255,0.4), 0 -1px 0 rgba(0,0,0,0.15), 0 0 6px rgba(255,230,160,0.55);
+          overflow: hidden;
+          position: relative;
+          z-index: 50;
+        }
+
+        /* Marquee */
+        .marquee { 
+          display: flex; 
+          min-width: 300%; 
+          animation: marquee 30s linear infinite; 
+        }
+
+        .marquee-content { 
+          display: flex; 
+          align-items: center; 
+          margin-right: 2rem; 
+        }
+
+        .marquee img { 
+          max-height: 40px; 
+          display: inline-block; 
+          vertical-align: middle; 
+          margin-right: 1rem; 
+        }
+
+        .marquee span {
+          display: inline-flex;
+          align-items: center;
+          white-space: nowrap;
+          padding: clamp(0.375rem, 1vw, 0.5rem) clamp(1.25rem, 2.5vw, 2rem);
+          background: linear-gradient(180deg, #f8f6f0 0%, #fff8e8 50%, #f5f0e5 100%);
+          font-weight: 700;
+          text-transform: uppercase;
+          border: clamp(1.5px, 0.25vw, 2px) solid #000;
+          border-radius: clamp(4px, 0.6vw, 6px);
+          box-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 0 0 6px rgba(255,230,160,0.55);
+          margin-right: clamp(0.75rem, 1.5vw, 1rem);
+          font-size: clamp(0.75rem, 1.25vw, 0.875rem);
+        }
+
+        /* Client info neon block (placed between running text and video) */
+        .ClientName_Container {
+          display: flex;
+          flex-direction: column;
+          gap: 0.25rem;
+          align-items: flex-start;
+          justify-content: flex-start;
+          font-family: 'Roboto', Helvetica, Arial, sans-serif;
+          padding: 10px;
+          /* give each panel an equal margin on all sides for consistent spacing */
+          margin: clamp(0.9rem, 1.8vw, 1.25rem);
+          /* ใช้สไตล์เดียวกับ .neon-btn (gradient) */
+          background: linear-gradient(180deg, #f8f6f0 0%, #fffef8 45%, #fff8e8 55%, #f5f0e5 100%);
+          border: 8px solid #74640a;
+          border-radius: 20px;
+          box-shadow: 1px 1px 0 #000, -10px 8px #3b3305, 0 0 28px rgba(255,230,160,0.62);
+          color: #000000;
+          /* ให้แต่ละบล็อกใช้พื้นที่ 46.8% ของแถว (ลด 10% จาก 52%) */
+          flex: 0 0 46.8%;
+          max-width: 340px;
+          max-height: 150PX;
+          /* เพิ่มความสูงแบบ responsive (ขยายขึ้นประมาณ +70% รวม) */
+          min-height: 0;
+          aspect-ratio: 1;
+          box-sizing: border-box;
+          /* smoother transform when nudging */
+          transition: transform 0.25s ease;
+          will-change: transform;
+          z-index: 18;
+        }
+
+        .ClientName_Container .ClientName {
+          font-family: 'Roboto', Helvetica, Arial, sans-serif;
+          font-weight: 700;
+          font-size: clamp(1rem, 1.6vw, 1.25rem);
+          letter-spacing: 0.2px;
+          color: #000;
+          /* เพิ่มเงาให้ข้อความเด่นขึ้น */
+          text-shadow: 0 2px 6px rgba(0,0,0,0.32), 0 1px 0 rgba(255,255,255,0.35);
+        }
+
+        .ClientName_Container .Date_install,
+        .ClientName_Container .ClientNo {
+          font-family: 'Roboto', Helvetica, Arial, sans-serif;
+          font-weight: 500;
+          font-size: clamp(0.8rem, 1.1vw, 0.95rem);
+          color: rgba(0,0,0,0.9);
+          text-shadow: 0 1px 3px rgba(0,0,0,0.22);
+        }
+
+        .ClientName_Container.neon {
+          /* subtle neon glow like video wrapper */
+          box-shadow: 1px 1px 0 #000, -8px 6px #3b3305, 0 0 28px rgba(255,230,160,0.6), 0 10px 30px rgba(0,0,0,0.18);
+        }
+
+        /* Row wrapper to place two client panels side-by-side
+           (neutralized to avoid framed/boxed look) */
+        .client-row {
+          display: flex;
+          gap: clamp(1rem, 2.5vw, 2rem); /* เพิ่มช่องว่างแนวนอนระหว่างสองกล่อง (responsive) */
+          justify-content: center; /* center the pair across the page */
+          align-items: stretch;
+          width: 100%;
+          box-sizing: border-box;
+          margin: clamp(0.5rem, 1vw, 1rem) 0; /* small vertical spacing only */
+
+          /* Force a single row on all screen sizes so the two panels stay side-by-side */
+          flex-wrap: nowrap;
+          overflow: visible;
+        }
+
+        /* Removed explicit sibling margin fallback; panels now use equal margins */
+
+        /* Nudge left and right panels slightly outward for visual spacing */
+        /* removed outward nudging to avoid framed appearance */
+
+        /* Responsive adjustments: reduce nudge on tablets, stack on small phones */
+        @media (max-width: 1023px) {
+          /* iPad / small tablets: keep panels inline but avoid framing */
+          .client-row {
+            max-width: none;
+            gap: clamp(0.6rem, 1.2vw, 1rem); /* ลดช่องว่างเล็กน้อยบน tablet */
+          }
+          .ClientName_Container {
+            /* make panels a bit narrower on tablets so they don't overflow */
+            /* reduce width by ~20% and height by ~50% for iPad per request, then +30% height, -10% width */
+            flex: 0 0 34.2%;
+            max-width: 34.2%;
+            /* เพิ่มความสูงขึ้น 70% รวม */
+            min-height: 0;
+            aspect-ratio: 1;
+            /* padding 10px */
+            padding: 10px;
+          }
+          .client-row > .ClientName_Container + .ClientName_Container {
+            margin-left: clamp(0.6rem, 1.2vw, 1rem); /* smaller margin on tablet */
+          }
+        }
+
+        /* iPad Pro (approx): slightly reduce width (~3%) and height (~10%) for the client panels */
+        @media (min-width: 1024px) and (max-width: 1366px) {
+          .ClientName_Container {
+            /* reduce width by ~3% (from 38% to ~35%), then -10% to 31.5% */
+            flex: 0 0 31.5%;
+            max-width: 31.5%;
+            /* reduce height to very small, like portrait */
+            min-height: 0;
+            aspect-ratio: 1;
+            /* padding 10px */
+            padding: 10px;
+          }
+          .client-row {
+            gap: clamp(0.5rem, 1.0vw, 0.9rem);
+          }
+        }
+
+        /* iPad portrait: increase client panel height and padding in portrait orientation */
+        @media (min-width: 768px) and (max-width: 1023px) and (orientation: portrait) {
+          .ClientName_Container {
+            /* reduce height to half */
+            min-height: 0;
+            aspect-ratio: 1;
+            /* padding 10px */
+            padding: 10px;
+            /* ensure panels remain side-by-side, reduce width 10% */
+            flex: 0 0 36%;
+            max-width: 36%;
+          }
+          .client-row {
+            gap: clamp(0.8rem, 1.6vw, 1.2rem);
+          }
+          /* Shrink running marquee on iPad portrait for better layout */
+          .running-text {
+            /* make it narrower than desktop */
+            flex: 1 1 60% !important;
+            min-width: 280px !important;
+            max-width: 900px !important;
+          }
+          /* Keep the top-bar in a single row and align the settings button with the marquee */
+          .top-bar {
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: clamp(0.75rem, 2vw, 1.5rem) !important;
+          }
+          .top-bar .neon-btn {
+            order: 2;
+            flex: 0 0 auto;
+            margin-left: 8px;
+            align-self: center;
+          }
+          .top-bar .running-text { order: 1; }
+        }
+
+        @media (max-width: 767px) {
+          /* Mobile: pair panels side-by-side like desktop */
+          .client-row {
+            flex-direction: row;
+            max-width: 100%;
+            overflow-x: visible;
+            gap: clamp(0.6rem, 4vw, 1rem);
+            -webkit-overflow-scrolling: touch;
+            padding: 0 clamp(0.5rem, 3vw, 1rem);
+            /* Force side-by-side pairing */
+            flex-wrap: nowrap;
+          }
+          .client-row .ClientName_Container:first-child,
+          .client-row .ClientName_Container:last-child {
+            transform: none;
+          }
+          .ClientName_Container {
+            /* On mobile, make each panel 50% width to pair side-by-side */
+            flex: 0 0 50%;
+            max-width: 48%;
+            width: 50%;
+            /* keep equal margin but smaller on phones */
+            margin: clamp(0.4rem, 2.5vw, 0.6rem);
+            min-height: 0;
+            aspect-ratio: 1;
+            /* padding 10px */
+            padding: 10px;
+            box-sizing: border-box;
+            margin: auto;
+            max-height: 100PX;
+          }
+        }
+
+        @keyframes marquee { 
+          0% { transform: translateX(0); } 
+          100% { transform: translateX(-50%); } 
+        }
+
+        /* Scroll Reveal */
+        .scroll-reveal { 
+          opacity: 0; 
+          transform: translateY(40px); 
+          transition: opacity 0.9s ease, transform 0.9s ease;
+          position: relative;
+          z-index: 10;
+        }
+
+        .scroll-reveal.visible { 
+          opacity: 1; 
+          transform: translateY(0); 
+        }
+
+        /* Video Box */
+        .video-box {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          white-space: nowrap;
+          padding: 0.9rem 1.5rem;
+          background: linear-gradient(180deg, rgba(239,187,91,0.72) 0%, rgba(255,220,140,0.6) 50%, #f5f0e5 100%);
+          border: 8px solid #74640a;
+          border-radius: 22px;
+          box-shadow: 1px 1px 0 #000, -10px 8px #3b3305, 0 0 28px rgba(255,230,160,0.62);
+          position: relative;
+          overflow: hidden;
+          z-index: 10;
+        }
+
+        /* Neon effect for video */
+        .neon-wrapper {
+          display: inline-block;
+          padding: 12px;
+          border-radius: 22px;
+          /* ใช้โทนสีเดียวกับ .video-box (ทอง/ส้ม) แต่บางเบาเพื่อเป็น glow */
+          background: linear-gradient(180deg, rgba(239,187,91,0.12) 0%, rgba(255,220,140,0.08) 60%);
+          border: 8px solid #74640a;
+          /* เงาแบบเดียวกับปุ่ม: hard offset + deeper glow */
+          box-shadow: 1px 1px 0 #000, -10px 8px #3b3305, 0 0 30px rgba(255,230,160,0.7), 0 10px 36px rgba(0,0,0,0.2);
+          transition: box-shadow 0.35s ease, transform 0.35s ease;
+          -webkit-backdrop-filter: blur(4px);
+          backdrop-filter: blur(4px);
+        }
+
+        .neon-wrapper:hover {
+          transform: translateY(-4px);
+          box-shadow: 1px 1px 0 #000, -8px 6px #3b3305, 0 0 36px rgba(255,230,160,0.75), 0 12px 40px rgba(0,0,0,0.25);
+        }
+
+        .neon-video {
+          display: block;
+          /* ให้วิดีโอมีเงาหลักเดียวกับปุ่ม และ glow เล็กน้อย */
+          box-shadow: 1px 1px 0 #000, -6px 5px #3b3305, 0 0 18px rgba(255,230,160,0.45);
+          filter: drop-shadow(0 6px 12px rgba(0,0,0,0.25)) drop-shadow(0 0 10px rgba(255,230,160,0.18));
+          transition: filter 0.35s ease, box-shadow 0.35s ease;
+        }
+
+        @keyframes neonPulse {
+          0%, 100% { box-shadow: 0 8px 30px rgba(0,0,0,0.35), 0 0 14px rgba(255,230,160,0.12); }
+          50% { box-shadow: 0 10px 40px rgba(0,0,0,0.4), 0 0 30px rgba(255,230,160,0.28); }
+        }
+
+        .neon-wrapper .neon-video {
+          animation: neonPulse 3.5s ease-in-out infinite;
+        }
+
+        /* New: center and make video responsive */
+        .video-wrap {
+          width: 100%;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          padding: 0 1rem;
+          box-sizing: border-box;
+        }
+        .hero-video {
+          width: 100%;
+          max-width: 1120px; /* enlarged max for larger displays */
+          height: auto;
+          border-radius: 16px;
+          box-shadow: 0 10px 36px rgba(0,0,0,0.4);
+          display: block;
+        }
+
+        /* Ensure video is visible above background layers */
+        .hero-video, .video-wrap { z-index: 20; position: relative; }
+
+        /* ฟองฟุ้งเบา ๆ */
+        .video-box::before,
+        .video-box::after {
+          content: '';
+          position: absolute;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.2);
+          filter: blur(20px);
+          animation: bubbleMove 12s linear infinite;
+        }
+
+        .video-box::before {
+          width: 60px;
+          height: 60px;
+          top: 15%;
+          left: 10%;
+        }
+        
+
+        @keyframes bubbleMove {
+          0% { transform: translateY(0) translateX(0); }
+          50% { transform: translateY(-10px) translateX(8px); }
+          100% { transform: translateY(0) translateX(0); }
+        }
+
+        .slogan-text { 
+          font-family: 'Poppins', sans-serif; 
+          font-weight: 700; 
+          color: #7d1007; 
+          font-size: 2.7rem; 
+        }
+
+        /* ลดขนาด 70% สำหรับมือถือ */
+        @media (max-width: 768px) {
+          .running-text {
+            border-width: 2px;
+            padding: 3px 4px;
+            font-size: 0.6rem;
+          }
+          
+          .marquee span {
+            padding: 0.2rem 0.6rem;
+            border-width: 1px;
+            border-radius: 3px;
+            font-size: 0.5rem;
+            margin-right: 0.4rem;
+          }
+          
+          .neon-btn {
+            border-width: 3px;
+            padding: 5px 10px;
+            /* match running-text size on mobile */
+            font-size: 0.6rem;
+            /* ลดขนาดปุ่มบนมือถือ 40% (scale to 60%) */
+            transform: scale(0.6);
+            transform-origin: center center;
+            /* reduce visual footprint while preserving layout flow around it */
+            will-change: transform;
+          }
+          
+          /* ป้องกัน text wrap */
+          .whitespace-nowrap {
+            white-space: nowrap !important;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+
+          /* Mobile: reduce client panel text to match running-text */
+          .ClientName_Container .ClientName,
+          .ClientName_Container .Date_install,
+          .ClientName_Container .ClientNo {
+            font-size: 0.6rem;
+            line-height: 1.1;
+          }
+        }
+
+        /* Desktop Layout */
+        .desktop-layout {
+          max-width: 1400px;
+          width: 100%;
+          /* reduce top margin so video and menu sit higher on the page */
+          margin: 40px auto 0 auto !important;
+          padding: 0 clamp(2rem, 4vw, 4rem);
+          display: flex !important;
+          flex-direction: row !important;
+          align-items: center !important;
+          justify-content: space-between !important;
+          gap: clamp(2rem, 4vw, 4rem) !important;
+          box-sizing: border-box;
+        }
+
+        .desktop-layout .video-box {
+          flex: 0 1 700px;
+          max-width: 700px;
+        }
+
+        .desktop-layout .video-box video {
+          width: 100%;
+          max-width: 100%;
+        }
+
+
+        /* Ensure the video element is visible above background and responsive */
+        .desktop-layout video {
+          display: block;
+          margin: 0 auto;
+          width: 100%;
+          max-width: 900px;
+          height: auto;
+          z-index: 20;
+          position: relative;
+        }
+        /* Menu Container - เรียงจากบนลงล่าง */
+        .menu-container {
+          display: flex;
+          flex-direction: column;
+          align-items: stretch;
+          gap: clamp(1.2rem, 1.8vw, 1.8rem);
+          min-width: 280px;
+          max-width: 350px;
+          flex-shrink: 0;
+          position: relative;
+          right: -780px;
+        }
+
+        .menu-container .neon-btn {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        /* Mobile & Tablet - เปลี่ยนเป็น column */
+        @media (max-width: 1023px) {
+          .desktop-layout {
+            flex-direction: column !important;
+            gap: 2rem !important;
+          }
+          
+          .desktop-layout .video-box {
+            max-width: 100% !important;
+          }
+        }
+    </style>
 </head>
-
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
-
-body {
-  font-family: 'Roboto', Helvetica, Arial, sans-serif;
-}
-
-.neon-btn, .running-text, .marquee span {
-  font-family: 'Roboto', Helvetica, Arial, sans-serif;
-  font-weight: 300; /* Light */
-}
-
-/* 🌈 พื้นหลังทั้งหน้า */
-.root-bg {
-  position: relative;
-  overflow-x: visible;
-  min-height: 100vh;
-}
-
-.root-bg::before,
-.root-bg::after {
-  content: '';
-  position: fixed;
-  top: 0; 
-  left: 0; 
-  right: 0; 
-  bottom: 0;
-  z-index: 0;
-  animation: floatBg 30s linear infinite;
-}
-
-.root-bg::before {
-  background: linear-gradient(to bottom, #ebd09e 0%, #251f03 100%);
-}
-
-.root-bg::after {
-  background: radial-gradient(circle at 30% 40%, #ebd09e, #251f03);
-}
-
-/* Animation */
-/* Logo ลายน้ำ */
-.background-image {
-  position: fixed;
-  top: 55%;
-  left: 75%;
-  transform: translate(-50%, -50%);
-  width: 90%;        /* ✅ ขยายจาก 60% */
-  max-width: 1400px; /* ✅ เพิ่มขนาดสูงสุด */
-  height: auto;
-  opacity: 0.3;
-  z-index: 1;
-  pointer-events: none;
-}
-
-.background-image img {
-  width: 100%;
-  height: auto;
-  object-fit: contain;
-  display: block;
-}
-
-/* Neon Button */
-.neon-btn {
-  background: linear-gradient(180deg, #f8f6f0 0%, #fffef8 45%, #fff8e8 55%, #f5f0e5 100%);
-  color: #000000;
-  border: 6px solid #74640a;
-  border-radius: 9999px;
-  box-shadow: 1px 1px 0 #000, -8px 6px #3b3305, 0 0 20px rgba(255,230,160,0.55);
-  font-weight: 700;
-  font-size: clamp(1rem, 2vw, 1.5rem);
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3), 0 -1px 0 rgba(0, 0, 0, 0.1);
-  position: relative;
-  padding: clamp(14px, 2.5vw, 20px) clamp(35px, 5vw, 50px);
-  transform: translateZ(0);
-  transition: all 0.3s ease;
-  z-index: 10;
-  min-height: 55px;
-}
-
-/* Running Text */
-.running-text {
-  background: linear-gradient(180deg, #f8f6f0 0%, #fff8e8 50%, #f5f0e5 100%);
-  color: #000;
-  border: clamp(4px, 0.5vw, 6px) solid #74640a;
-  border-radius: 9999px;
-  font-weight: 700;
-  text-transform: uppercase;
-  padding: clamp(10px, 1.5vw, 15px) clamp(16px, 2vw, 20px);
-  box-shadow: 1px 1px 0 #000, clamp(-6px, -0.8vw, -8px) clamp(4px, 0.6vw, 6px) #3b3305, 0 0 20px rgba(255,230,160,0.55);
-  text-shadow: 0 1px 0 rgba(255,255,255,0.4), 0 -1px 0 rgba(0,0,0,0.15), 0 0 6px rgba(255,230,160,0.55);
-  overflow: hidden;
-  position: relative;
-  z-index: 50;
-}
-
-/* Marquee */
-.marquee { 
-  display: flex; 
-  min-width: 300%; 
-  animation: marquee 30s linear infinite; 
-}
-
-.marquee-content { 
-  display: flex; 
-  align-items: center; 
-  margin-right: 2rem; 
-}
-
-.marquee img { 
-  max-height: 40px; 
-  display: inline-block; 
-  vertical-align: middle; 
-  margin-right: 1rem; 
-}
-
-.marquee span {
-  display: inline-flex;
-  align-items: center;
-  white-space: nowrap;
-  padding: clamp(0.375rem, 1vw, 0.5rem) clamp(1.25rem, 2.5vw, 2rem);
-  background: linear-gradient(180deg, #f8f6f0 0%, #fff8e8 50%, #f5f0e5 100%);
-  font-weight: 700;
-  text-transform: uppercase;
-  border: clamp(1.5px, 0.25vw, 2px) solid #000;
-  border-radius: clamp(4px, 0.6vw, 6px);
-  box-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 0 0 6px rgba(255,230,160,0.55);
-  margin-right: clamp(0.75rem, 1.5vw, 1rem);
-  font-size: clamp(0.75rem, 1.25vw, 0.875rem);
-}
-
-/* Client info neon block (placed between running text and video) */
-.ClientName_Container {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  align-items: flex-start;
-  justify-content: flex-start;
-  font-family: 'Roboto', Helvetica, Arial, sans-serif;
-  padding: 10px;
-  /* give each panel an equal margin on all sides for consistent spacing */
-  margin: clamp(0.9rem, 1.8vw, 1.25rem);
-  /* ใช้สไตล์เดียวกับ .neon-btn (gradient) */
-  background: linear-gradient(180deg, #f8f6f0 0%, #fffef8 45%, #fff8e8 55%, #f5f0e5 100%);
-  border: 8px solid #74640a;
-  border-radius: 20px;
-  box-shadow: 1px 1px 0 #000, -10px 8px #3b3305, 0 0 28px rgba(255,230,160,0.62);
-  color: #000000;
-  /* ให้แต่ละบล็อกใช้พื้นที่ 46.8% ของแถว (ลด 10% จาก 52%) */
-  flex: 0 0 46.8%;
-  max-width: 340px;
-  max-height: 150PX;
-  /* เพิ่มความสูงแบบ responsive (ขยายขึ้นประมาณ +70% รวม) */
-  min-height: 0;
-  aspect-ratio: 1;
-  box-sizing: border-box;
-  /* smoother transform when nudging */
-  transition: transform 0.25s ease;
-  will-change: transform;
-  z-index: 18;
-}
-
-.ClientName_Container .ClientName {
-  font-family: 'Roboto', Helvetica, Arial, sans-serif;
-  font-weight: 700;
-  font-size: clamp(1rem, 1.6vw, 1.25rem);
-  letter-spacing: 0.2px;
-  color: #000;
-  /* เพิ่มเงาให้ข้อความเด่นขึ้น */
-  text-shadow: 0 2px 6px rgba(0,0,0,0.32), 0 1px 0 rgba(255,255,255,0.35);
-}
-
-.ClientName_Container .Date_install,
-.ClientName_Container .ClientNo {
-  font-family: 'Roboto', Helvetica, Arial, sans-serif;
-  font-weight: 500;
-  font-size: clamp(0.8rem, 1.1vw, 0.95rem);
-  color: rgba(0,0,0,0.9);
-  text-shadow: 0 1px 3px rgba(0,0,0,0.22);
-}
-
-.ClientName_Container.neon {
-  /* subtle neon glow like video wrapper */
-  box-shadow: 1px 1px 0 #000, -8px 6px #3b3305, 0 0 28px rgba(255,230,160,0.6), 0 10px 30px rgba(0,0,0,0.18);
-}
-
-/* Row wrapper to place two client panels side-by-side
-   (neutralized to avoid framed/boxed look) */
-.client-row {
-  display: flex;
-  gap: clamp(1rem, 2.5vw, 2rem); /* เพิ่มช่องว่างแนวนอนระหว่างสองกล่อง (responsive) */
-  justify-content: center; /* center the pair across the page */
-  align-items: stretch;
-  width: 100%;
-  box-sizing: border-box;
-  margin: clamp(0.5rem, 1vw, 1rem) 0; /* small vertical spacing only */
-
-  /* Force a single row on all screen sizes so the two panels stay side-by-side */
-  flex-wrap: nowrap;
-  overflow: visible;
-}
-
-/* Removed explicit sibling margin fallback; panels now use equal margins */
-
-/* Nudge left and right panels slightly outward for visual spacing */
-/* removed outward nudging to avoid framed appearance */
-
-/* Responsive adjustments: reduce nudge on tablets, stack on small phones */
-@media (max-width: 1023px) {
-  /* iPad / small tablets: keep panels inline but avoid framing */
-  .client-row {
-    max-width: none;
-    gap: clamp(0.6rem, 1.2vw, 1rem); /* ลดช่องว่างเล็กน้อยบน tablet */
-  }
-  .ClientName_Container {
-    /* make panels a bit narrower on tablets so they don't overflow */
-    /* reduce width by ~20% and height by ~50% for iPad per request, then +30% height, -10% width */
-    flex: 0 0 34.2%;
-    max-width: 34.2%;
-    /* เพิ่มความสูงขึ้น 70% รวม */
-    min-height: 0;
-    aspect-ratio: 1;
-    /* padding 10px */
-    padding: 10px;
-  }
-  .client-row > .ClientName_Container + .ClientName_Container {
-    margin-left: clamp(0.6rem, 1.2vw, 1rem); /* smaller margin on tablet */
-  }
-}
-
-/* iPad Pro (approx): slightly reduce width (~3%) and height (~10%) for the client panels */
-@media (min-width: 1024px) and (max-width: 1366px) {
-  .ClientName_Container {
-    /* reduce width by ~3% (from 38% to ~35%), then -10% to 31.5% */
-    flex: 0 0 31.5%;
-    max-width: 31.5%;
-    /* reduce height to very small, like portrait */
-    min-height: 0;
-    aspect-ratio: 1;
-    /* padding 10px */
-    padding: 10px;
-  }
-  .client-row {
-    gap: clamp(0.5rem, 1.0vw, 0.9rem);
-  }
-}
-
-/* iPad portrait: increase client panel height and padding in portrait orientation */
-@media (min-width: 768px) and (max-width: 1023px) and (orientation: portrait) {
-  .ClientName_Container {
-    /* reduce height to half */
-    min-height: 0;
-    aspect-ratio: 1;
-    /* padding 10px */
-    padding: 10px;
-    /* ensure panels remain side-by-side, reduce width 10% */
-    flex: 0 0 36%;
-    max-width: 36%;
-  }
-  .client-row {
-    gap: clamp(0.8rem, 1.6vw, 1.2rem);
-  }
-}
-
-@media (max-width: 767px) {
-  /* Mobile: pair panels side-by-side like desktop */
-  .client-row {
-    flex-direction: row;
-    max-width: 100%;
-    overflow-x: visible;
-    gap: clamp(0.6rem, 4vw, 1rem);
-    -webkit-overflow-scrolling: touch;
-    padding: 0 clamp(0.5rem, 3vw, 1rem);
-    /* Force side-by-side pairing */
-    flex-wrap: nowrap;
-  }
-  .client-row .ClientName_Container:first-child,
-  .client-row .ClientName_Container:last-child {
-    transform: none;
-  }
-  .ClientName_Container {
-    /* On mobile, make each panel 50% width to pair side-by-side */
-    flex: 0 0 50%;
-    max-width: 48%;
-    width: 50%;
-    /* keep equal margin but smaller on phones */
-    margin: clamp(0.4rem, 2.5vw, 0.6rem);
-    min-height: 0;
-    aspect-ratio: 1;
-    /* padding 10px */
-    padding: 10px;
-    box-sizing: border-box;
-    margin: auto;
-    max-height: 100PX;
-  }
-}
-
-@keyframes marquee { 
-  0% { transform: translateX(0); } 
-  100% { transform: translateX(-50%); } 
-}
-
-/* Scroll Reveal */
-.scroll-reveal { 
-  opacity: 0; 
-  transform: translateY(40px); 
-  transition: opacity 0.9s ease, transform 0.9s ease;
-  position: relative;
-  z-index: 10;
-}
-
-.scroll-reveal.visible { 
-  opacity: 1; 
-  transform: translateY(0); 
-}
-
-/* Video Box */
-.video-box {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  white-space: nowrap;
-  padding: 0.9rem 1.5rem;
-  background: linear-gradient(180deg, rgba(239,187,91,0.72) 0%, rgba(255,220,140,0.6) 50%, #f5f0e5 100%);
-  border: 8px solid #74640a;
-  border-radius: 22px;
-  box-shadow: 1px 1px 0 #000, -10px 8px #3b3305, 0 0 28px rgba(255,230,160,0.62);
-  position: relative;
-  overflow: hidden;
-  z-index: 10;
-}
-
-/* Neon effect for video */
-.neon-wrapper {
-  display: inline-block;
-  padding: 12px;
-  border-radius: 22px;
-  /* ใช้โทนสีเดียวกับ .video-box (ทอง/ส้ม) แต่บางเบาเพื่อเป็น glow */
-  background: linear-gradient(180deg, rgba(239,187,91,0.12) 0%, rgba(255,220,140,0.08) 60%);
-  border: 8px solid #74640a;
-  /* เงาแบบเดียวกับปุ่ม: hard offset + deeper glow */
-  box-shadow: 1px 1px 0 #000, -10px 8px #3b3305, 0 0 30px rgba(255,230,160,0.7), 0 10px 36px rgba(0,0,0,0.2);
-  transition: box-shadow 0.35s ease, transform 0.35s ease;
-  -webkit-backdrop-filter: blur(4px);
-  backdrop-filter: blur(4px);
-}
-
-.neon-wrapper:hover {
-  transform: translateY(-4px);
-  box-shadow: 1px 1px 0 #000, -8px 6px #3b3305, 0 0 36px rgba(255,230,160,0.75), 0 12px 40px rgba(0,0,0,0.25);
-}
-
-.neon-video {
-  display: block;
-  /* ให้วิดีโอมีเงาหลักเดียวกับปุ่ม และ glow เล็กน้อย */
-  box-shadow: 1px 1px 0 #000, -6px 5px #3b3305, 0 0 18px rgba(255,230,160,0.45);
-  filter: drop-shadow(0 6px 12px rgba(0,0,0,0.25)) drop-shadow(0 0 10px rgba(255,230,160,0.18));
-  transition: filter 0.35s ease, box-shadow 0.35s ease;
-}
-
-@keyframes neonPulse {
-  0%, 100% { box-shadow: 0 8px 30px rgba(0,0,0,0.35), 0 0 14px rgba(255,230,160,0.12); }
-  50% { box-shadow: 0 10px 40px rgba(0,0,0,0.4), 0 0 30px rgba(255,230,160,0.28); }
-}
-
-.neon-wrapper .neon-video {
-  animation: neonPulse 3.5s ease-in-out infinite;
-}
-
-/* New: center and make video responsive */
-.video-wrap {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 0 1rem;
-  box-sizing: border-box;
-}
-.hero-video {
-  width: 100%;
-  max-width: 1120px; /* enlarged max for larger displays */
-  height: auto;
-  border-radius: 16px;
-  box-shadow: 0 10px 36px rgba(0,0,0,0.4);
-  display: block;
-}
-
-/* Ensure video is visible above background layers */
-.hero-video, .video-wrap { z-index: 20; position: relative; }
-
-/* ฟองฟุ้งเบา ๆ */
-.video-box::before,
-.video-box::after {
-  content: '';
-  position: absolute;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
-  filter: blur(20px);
-  animation: bubbleMove 12s linear infinite;
-}
-
-.video-box::before {
-  width: 60px;
-  height: 60px;
-  top: 15%;
-  left: 10%;
-}
- 
-
-@keyframes bubbleMove {
-  0% { transform: translateY(0) translateX(0); }
-  50% { transform: translateY(-10px) translateX(8px); }
-  100% { transform: translateY(0) translateX(0); }
-}
-
-.slogan-text { 
-  font-family: 'Poppins', sans-serif; 
-  font-weight: 700; 
-  color: #7d1007; 
-  font-size: 2.7rem; 
-}
-
-/* ลดขนาด 70% สำหรับมือถือ */
-@media (max-width: 768px) {
-  .running-text {
-    border-width: 2px;
-    padding: 3px 4px;
-    font-size: 0.6rem;
-  }
-  
-  .marquee span {
-    padding: 0.2rem 0.6rem;
-    border-width: 1px;
-    border-radius: 3px;
-    font-size: 0.5rem;
-    margin-right: 0.4rem;
-  }
-  
-  .neon-btn {
-    border-width: 3px;
-    padding: 5px 10px;
-    /* match running-text size on mobile */
-    font-size: 0.6rem;
-    /* ลดขนาดปุ่มบนมือถือ 40% (scale to 60%) */
-    transform: scale(0.6);
-    transform-origin: center center;
-    /* reduce visual footprint while preserving layout flow around it */
-    will-change: transform;
-  }
-  
-  /* ป้องกัน text wrap */
-  .whitespace-nowrap {
-    white-space: nowrap !important;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  /* Mobile: reduce client panel text to match running-text */
-  .ClientName_Container .ClientName,
-  .ClientName_Container .Date_install,
-  .ClientName_Container .ClientNo {
-    font-size: 0.6rem;
-    line-height: 1.1;
-  }
-}
-
-/* Desktop Layout */
-.desktop-layout {
-  max-width: 1400px;
-  width: 100%;
-  /* reduce top margin so video and menu sit higher on the page */
-  margin: 40px auto 0 auto !important;
-  padding: 0 clamp(2rem, 4vw, 4rem);
-  display: flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  gap: clamp(2rem, 4vw, 4rem) !important;
-  box-sizing: border-box;
-}
-
-.desktop-layout .video-box {
-  flex: 0 1 700px;
-  max-width: 700px;
-}
-
-.desktop-layout .video-box video {
-  width: 100%;
-  max-width: 100%;
-}
-
-
-/* Ensure the video element is visible above background and responsive */
-.desktop-layout video {
-  display: block;
-  margin: 0 auto;
-  width: 100%;
-  max-width: 900px;
-  height: auto;
-  z-index: 20;
-  position: relative;
-}
-/* Menu Container - เรียงจากบนลงล่าง */
-.menu-container {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: clamp(1.2rem, 1.8vw, 1.8rem);
-  min-width: 280px;
-  max-width: 350px;
-  flex-shrink: 0;
-  position: relative;
-  right: -780px;
-}
-
-.menu-container .neon-btn {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Mobile & Tablet - เปลี่ยนเป็น column */
-@media (max-width: 1023px) {
-  .desktop-layout {
-    flex-direction: column !important;
-    gap: 2rem !important;
-  }
-  
-  .desktop-layout .video-box {
-    max-width: 100% !important;
-  }
-}
-</style>
 <body>
 
       <div class="root-bg" style="display: flex; flex-direction: column; position: relative; z-index: 10; padding: clamp(2rem,4vw,3rem) 0;">
@@ -546,7 +567,7 @@ body {
 
     <!-- Running Text -->
     <div class="top-bar" style="display: flex; align-items: center; justify-content: center; gap: clamp(1rem, 2vw, 2rem); padding: 0 clamp(1rem,3vw,1.5rem); margin-top: clamp(2rem,4vw,3rem); margin-bottom: clamp(2rem,4vw,3rem); flex-wrap: wrap;">       
-      <div class="running-text w-full max-w-[min(1200px,95vw)] overflow-hidden relative text-[clamp(0.875rem,1.5vw,1.25rem)] whitespace-nowrap" style="flex: 1 1 auto; min-width: 300px;">
+      <div class="running-text overflow-hidden relative text-[clamp(0.875rem,1.5vw,1.25rem)] whitespace-nowrap" style="flex: 1 1 80%; min-width: 420px; max-width: 1600px;">
         <div class="marquee">
           <div class="marquee-content">
             <span>Kwang Unlimit</span>
@@ -562,18 +583,25 @@ body {
         <a href="/catagoly" class="neon-btn bg-[#7d1007] text-white font-sans font-bold uppercase px-[clamp(15px,2vw,20px)] py-[clamp(19px,2.2vw,25px)] rounded-xl whitespace-nowrap flex items-center justify-center" style="flex: 0 0 auto; border-width: clamp(4px, 0.5vw, 6px); font-size: inherit; min-height: auto; text-decoration: none;">
           ตั้งค่า
         </a>
+      <!-- Active users / stats -->
+      <div id="user-stats" style="font-weight:700; padding-left:12px; display:flex; flex-direction:column; gap:2px;">
+        <div id="user-count">จำนวนเชื่อมต่อ (connections): 0</div>
+        <div id="distinct-count">จำนวนผู้ใช้งานที่กำลัง active (distinct clientIds): 0</div>
+        <div id="daily-count">ผู้ใช้วันนี้ (unique): 0</div>
+        <div id="ever-count">ผู้ใช้ทั้งหมดที่เคยเข้ามา: 0</div>
+      </div>
     </div>
 
     <!-- Video + Menu -->
     <!-- Client info (neon) -->
     <div class="client-row">
       <div class="ClientName_Container neon scroll-reveal">
-        <div class="ClientName">Huaroi</div>
+        <div class="ClientName">เทศบาลตำบลหัวรอ</div>
         <div class="Date_install">Date Installed : 1-11-25</div>
         <div class="ClientNo">Expiration Date : 1-12-25</div>
       </div>
       <div class="ClientName_Container neon scroll-reveal">
-        <div class="ClientName">Usernumber : No.001</div>
+        <div class="ClientName">Usernumber : No.002</div>
       </div>
     </div>
 
@@ -594,5 +622,46 @@ body {
 (function(_0xd9b){console.log('Welcome To New ERA! Kwang Unlimit LTD.');const _0x1a2b=document.querySelectorAll('.scroll-reveal');let _0x3c4d=null;_0x1a2b.forEach(_0x5e=>_0x5e.classList.remove('visible'));_0x3c4d=new IntersectionObserver(_0x6f7a=>{_0x6f7a.forEach(_0x8b9c=>{if(_0x8b9c.isIntersecting){_0x8b9c.target.classList.add('visible');}});},{threshold:0.15});_0x1a2b.forEach(_0xad=>_0x3c4d.observe(_0xad));window.addEventListener('beforeunload',()=>{if(_0x3c4d){_0x3c4d.disconnect();_0x3c4d=null;}});})();
 </script>
 
+<!-- Socket client (connect + heartbeat) -->
+<script src="/socket.io/socket.io.js"></script>
+<script src="/socket-client.js"></script>
+
+<script>
+// Periodically fetch /status/active-clients to show detailed stats
+async function fetchUserStats(){
+  try{
+    const res = await fetch('/status/active-clients');
+    if(!res.ok) return;
+    const data = await res.json();
+    if(!data || !data.success) return;
+    const ac = document.getElementById('user-count');
+    const dc = document.getElementById('distinct-count');
+    const dd = document.getElementById('daily-count');
+    const ev = document.getElementById('ever-count');
+    if(ac) ac.textContent = 'จำนวนเชื่อมต่อ (connections): ' + (data.activeConnections ?? data.activeClients ?? 0);
+    if(dc) dc.textContent = 'จำนวนผู้ใช้งานที่กำลัง active (distinct clientIds): ' + (data.distinctActiveClientIds ?? 0);
+    if(dd) dd.textContent = 'ผู้ใช้วันนี้ (unique): ' + (data.dailyUniqueToday ?? 0);
+    if(ev) ev.textContent = 'ผู้ใช้ทั้งหมดที่เคยเข้ามา: ' + (data.totalEverUsers ?? 0);
+  }catch(e){
+    // ignore
+  }
+}
+
+// initial fetch and interval
+fetchUserStats();
+setInterval(fetchUserStats, 10000);
+
+// also update active connections quickly when socket emits clientCount
+if(window.io){
+  try{
+    const s = io();
+    s.on('clientCount', function(count){
+      const el = document.getElementById('user-count');
+      if(el) el.textContent = 'จำนวนเชื่อมต่อ (connections): ' + count;
+    });
+  }catch(e){}
+}
+</script>
+
 </body>
-</html>
+</html

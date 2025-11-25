@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>กิจกรรมภาษา</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/gamethai.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+
+<div class="game-container">
+  <div class="game-header">
+    <div class="game-title">กิจกรรมภาษา</div>
+    <div class="game-subtitle" id="topicDisplay">กำลังโหลด...</div>
+  </div>
+
+  <div class="question-section" id="questionSection">
+    <div class="question-text" id="questionText">กำลังโหลดคำถาม...</div>
+    <div class="choices-container" id="choicesContainer"></div>
+  </div>
+
+  <div class="completion-screen" id="completionScreen">
+    <div class="completion-emoji">🎉</div>
+    <div class="completion-title">เยี่ยมมาก!</div>
+    <div class="percentage-circle" id="percentageDisplay">0%</div>
+    <div class="completion-score" id="completionScore">คะแนน: 0/0</div>
+    <div class="completion-buttons">
+      <button class="btn btn-primary" onclick="restartGame()">🔄 เล่นอีกครั้ง</button>
+      <button class="btn btn-secondary" onclick="window.location.href='teacherthai.html'">🏠 กลับหน้าหลัก</button>
+    </div>
+  </div>
+
+  <div class="score-board" id="scoreBoard">
+    <div class="score-item">
+      <div class="score-label">คำถามที่</div>
+      <div class="score-value" id="currentQuestion">0/0</div>
+    </div>
+    <div class="score-item">
+      <div class="score-label">ถูก</div>
+      <div class="score-value" style="color: #27ae60;" id="correctCount">0</div>
+    </div>
+    <div class="score-item">
+      <div class="score-label">ผิด</div>
+      <div class="score-value" style="color: #e74c3c;" id="wrongCount">0</div>
+    </div>
+  </div>
+</div>
+
+<!-- Popup -->
+<div id="scorePopup">
+  <div class="popup-content">
+    <h2>📊 ผลคะแนน</h2>
+    <div style="margin: 20px 0;">
+     <!-- Removed player name section -->
+    </div>
+    <div style="margin: 20px 0;">
+      <p style="font-size: 1.1rem; color: #666; margin-bottom: 5px;">ผลการทดสอบ</p>
+      <p style="font-size: 1.8rem; font-weight: 700;" id="resultMessage">-</p>
+    </div>
+    <div style="margin: 20px 0;">
+      <p style="font-size: 1.1rem; color: #666; margin-bottom: 5px;">คะแนน</p>
+      <p style="font-size: 2.5rem; font-weight: 700; color: #764ba2;" id="finalScore">0/0</p>
+    </div>
+    <div class="popup-buttons">
+      <button class="circular-btn btn-playagain" onclick="playAgain()" title="เล่นอีกครั้ง">🔄</button>
+      <div style="position: relative;">
+        <button class="circular-btn btn-share" onclick="toggleShareMenu()" title="แชร์และบันทึก">🔗</button>
+        <div id="shareMenu" class="share-dropdown">
+          <div class="share-option share" onclick="shareResult()">
+            <span class="icon">🔗</span>
+            <span>แชร์</span>
+          </div>
+          <div class="share-option download" onclick="saveResult()">
+            <span class="icon">📥</span>
+            <span>ดาวน์โหลด</span>
+          </div>
+        </div>
+      </div>
+      <button class="circular-btn btn-close" onclick="closePopup()" title="ปิด">✖</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let teacherConfig = {};
+let currentQuestionIndex = 0;
+let correctAnswers = 0;
+let wrongAnswers = 0;
+let questions = [];
+
+// โหลดค่าจาก localStorage
+window.onload = function() {
+  const config = localStorage.getItem('thaiGameConfig');
+  if (!config) {
+    alert('ไม่พบข้อมูลกิจกรรม กรุณากลับไปสร้างกิจกรรมก่อน');
+    window.location.href = 'teacherthai.html';
+    return;
+  }
+  
+  teacherConfig = JSON.parse(config);
+  questions = shuffleArray([...teacherConfig.questions]);
+  
+  document.getElementById('topicDisplay').textContent = teacherConfig.topic || 'ภาษาไทย';
+  
+  
+  loadQuestion();
+};
+
+function shuffleArray(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
+function loadQuestion() {
+  if (currentQuestionIndex >= questions.length) {
+    showCompletion();
+    return;
+  }
+  
+  const question = questions[currentQuestionIndex];
+  document.getElementById('questionText').textContent = question.question;
+  document.getElementById('currentQuestion').textContent = `${currentQuestionIndex + 1}/${questions.length}`;
+  document.getElementById('correctCount').textContent = correctAnswers;
+  document.getElementById('wrongCount').textContent = wrongAnswers;
+  
+  // สุ่มคำตอบ
+  const shuffledChoices = question.choices.map((choice, index) => ({
+    text: choice,
+    isCorrect: index === question.correctIndex
+  }));
+  
+  for (let i = shuffledChoices.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffledChoices[i], shuffledChoices[j]] = [shuffledChoices[j], shuffledChoices[i]];
+  }
+  
+  const container = document.getElementById('choicesContainer');
+  container.innerHTML = shuffledChoices.map((choice, index) => `
+    <button class="choice-btn choice-${index + 1}" onclick="selectChoice(${choice.isCorrect}, this)">
+      ${choice.text}
+    </button>
+  `).join('');
+}
+
+function selectChoice(isCorrect, button) {
+  const allButtons = document.querySelectorAll('.choice-btn');
+  allButtons.forEach(btn => btn.disabled = true);
+  
+  if (isCorrect) {
+    correctAnswers++;
+    button.classList.add('correct');
+  } else {
+    wrongAnswers++;
+    button.classList.add('wrong');
+    
+    // แสดงคำตอบที่ถูก
+    allButtons.forEach(btn => {
+      if (btn.textContent.trim() === questions[currentQuestionIndex].choices[0]) {
+        btn.classList.add('correct');
+      }
+    });
+  }
+  
+  setTimeout(() => {
+    currentQuestionIndex++;
+    loadQuestion();
+  }, 1500);
+}
+
+function showCompletion() {
+  document.getElementById('questionSection').style.display = 'none';
+  document.getElementById('scoreBoard').style.display = 'none';
+  document.getElementById('completionScreen').style.display = 'block';
+  
+  const percentage = Math.round((correctAnswers / questions.length) * 100);
+  document.getElementById('percentageDisplay').textContent = `${percentage}%`;
+  document.getElementById('completionScore').textContent = `คะแนน: ${correctAnswers}/${questions.length}`;
+  
+  // แสดง Popup
+  setTimeout(() => {
+    showScorePopup();
+  }, 500);
+}
+
+function showScorePopup() {
+  const popup = document.getElementById('scorePopup');
+  const percentage = Math.round((correctAnswers / questions.length) * 100);
+  
+  // Removed player name display
+  document.getElementById('finalScore').textContent = `${correctAnswers}/${questions.length}`;
+  
+  let resultText = '';
+  let resultColor = '';
+  
+  if (percentage >= 85) {
+    resultText = '🏆 ยอดเยี่ยม!';
+    resultColor = '#f39c12';
+  } else if (percentage >= 70) {
+    resultText = '👏 เก่งมาก!';
+    resultColor = '#27ae60';
+  } else if (percentage >= 50) {
+    resultText = '😊 ดีมาก!';
+    resultColor = '#3498db';
+  } else if (percentage >= 35) {
+    resultText = '💪 พยายามอีกนิด!';
+    resultColor = '#e67e22';
+  } else {
+    resultText = '📚 ลองใหม่นะ!';
+    resultColor = '#e74c3c';
+  }
+  
+  const resultElement = document.getElementById('resultMessage');
+  resultElement.textContent = resultText;
+  resultElement.style.color = resultColor;
+  
+  popup.style.display = 'flex';
+}
+
+function closePopup() {
+  document.getElementById('scorePopup').style.display = 'none';
+  document.getElementById('shareMenu').style.display = 'none';
+}
+
+function playAgain() {
+  location.reload();
+}
+
+function restartGame() {
+  currentQuestionIndex = 0;
+  correctAnswers = 0;
+  wrongAnswers = 0;
+  questions = shuffleArray([...teacherConfig.questions]);
+  
+  document.getElementById('questionSection').style.display = 'flex';
+  document.getElementById('scoreBoard').style.display = 'flex';
+  document.getElementById('completionScreen').style.display = 'none';
+  document.getElementById('scorePopup').style.display = 'none';
+  
+  loadQuestion();
+}
+
+function toggleShareMenu() {
+  const menu = document.getElementById('shareMenu');
+  menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+}
+
+// ฟังก์ชันแชร์ผลเป็น PDF (ใช้รูปแบบเดียวกับ gamepicture.html)
+async function shareResult() {
+  try {
+    const date = new Date();
+    const dateStr = date.toLocaleDateString('th-TH');
+    const timeStr = date.toLocaleTimeString('th-TH');
+
+    const opt = {
+      margin: [12, 12, 12, 12],
+      filename: `${teacherConfig.topic || 'score'}_${date.toISOString().split('T')[0]}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+    };
+
+    const pdfContent = `
+      <div style="font-family: 'Arial', sans-serif; color: #333;">
+        <div style="text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+          <h1 style="margin: 5px 0; font-size: 24px;">รายงานผลการประเมิน</h1>
+          <p style="margin: 5px 0; font-size: 14px;">Smart Classroom Learning System</p>
+          <p style="margin: 5px 0; font-size: 12px;">วันที่: ${dateStr} เวลา: ${timeStr}</p>
+        </div>
+        <div style="background: #f8f9fa; border: 3px solid #667eea; border-radius: 10px; padding: 20px; margin-bottom: 20px; text-align: center;">
+          <p style="font-size: 16px; margin: 0 0 15px 0; color: #555;"><strong>คะแนนที่ได้รับ</strong></p>
+          <p style="font-size: 28px; color: #27ae60; font-weight: bold;">${correctAnswers}/${questions.length}</p>
+        </div>
+        <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+          <p style="font-size: 14px; font-weight: bold; margin: 0 0 10px 0; color: #667eea;">ข้อมูลกิจกรรม</p>
+          <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+            <tr>
+              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สัปดาห์ที่:</td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.week || '-'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สาระการเรียนรู้:</td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.topic || '-'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">หน่วยการเรียนรู้:</td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.unit || '-'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ครูผู้รับผิดชอบ:</td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.teacher || '-'}</td>
+            </tr>
+          </table>
+        </div>
+        <div style="margin-top: 400px; text-align: center;">
+          <p style="margin: 0; font-size: 13px; color: #333;">ลงชื่อ _______________________</p>
+          <p style="margin: 8px 0 0 0; font-size: 13px; color: #333;">ครูผู้รับผิดชอบ</p>
+          <p style="margin: 5px 0 0 0; font-size: 13px; color: #333;">( _______________________ )</p>
+        </div>
+      </div>
+    `;
+
+    const element = document.createElement('div');
+    element.innerHTML = pdfContent;
+
+    html2pdf().set(opt).from(element).output('blob').then(blob => {
+      const file = new File([blob], opt.filename, { type: 'application/pdf' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        navigator.share({
+          files: [file],
+          title: 'Smart Classroom - ผลการทดสอบ',
+          text: `ผลการทดสอบ: ${correctAnswers}/${questions.length}`
+        }).catch(err => console.log('Error sharing:', err));
+      } else {
+        html2pdf().set(opt).from(element).save();
+      }
+    });
+  } catch (error) {
+    console.error('Error sharing PDF:', error);
+  }
+}
+
+// ฟังก์ชันบันทึกผลเป็น PDF
+function saveResult() {
+  try {
+    const date = new Date();
+    const dateStr = date.toLocaleDateString('th-TH');
+    const timeStr = date.toLocaleTimeString('th-TH');
+    
+    const opt = {
+      margin: [12, 12, 12, 12],
+      filename: `${teacherConfig.topic || 'score'}_${date.toISOString().split('T')[0]}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+    };
+
+    const pdfContent = document.createElement('div');
+    pdfContent.innerHTML = `
+      <div style="font-family: 'Arial', sans-serif; color: #333;">
+        <div style="text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+          <h1 style="margin: 5px 0; font-size: 24px;">รายงานผลการประเมิน</h1>
+          <p style="margin: 5px 0; font-size: 14px;">Smart Classroom Learning System</p>
+          <p style="margin: 5px 0; font-size: 12px;">วันที่: ${dateStr} เวลา: ${timeStr}</p>
+        </div>
+        <div style="background: #f8f9fa; border: 3px solid #667eea; border-radius: 10px; padding: 20px; margin-bottom: 20px; text-align: center;">
+          <p style="font-size: 16px; margin: 0 0 15px 0; color: #555;"><strong>คะแนนที่ได้รับ</strong></p>
+          <p style="font-size: 28px; color: #27ae60; font-weight: bold;">${correctAnswers}/${questions.length}</p>
+        </div>
+        <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+          <p style="font-size: 14px; font-weight: bold; margin: 0 0 10px 0; color: #667eea;">ข้อมูลกิจกรรม</p>
+          <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+            <tr>
+              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สัปดาห์ที่:</td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.week || '-'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สาระการเรียนรู้:</td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.topic || '-'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">หน่วยการเรียนรู้:</td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.unit || '-'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ครูผู้รับผิดชอบ:</td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.teacher || '-'}</td>
+            </tr>
+          </table>
+        </div>
+        <div style="margin-top: 400px; text-align: center;">
+          <p style="margin: 0; font-size: 13px; color: #333;">ลงชื่อ _______________________</p>
+          <p style="margin: 8px 0 0 0; font-size: 13px; color: #333;">ครูผู้รับผิดชอบ</p>
+          <p style="margin: 5px 0 0 0; font-size: 13px; color: #333;">( _______________________ )</p>
+        </div>
+      </div>
+    `;
+
+    html2pdf().set(opt).from(pdfContent).save();
+  } catch (error) {
+    console.error('Error saving PDF:', error);
+  }
+}
+</script>
+
+<!-- Socket client (connect + heartbeat) -->
+<script src="/socket.io/socket.io.js"></script>
+<script src="/socket-client.js"></script>
+</body>
+</html>

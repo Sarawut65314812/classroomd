@@ -1,0 +1,164 @@
+/* Login Modal Styles */
+.login-modal {
+  display: flex;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 10000;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(5px);
+}
+
+.login-modal-content {
+  background: linear-gradient(135deg, rgba(245, 230, 211, 0.98) 0%, rgba(232, 205, 176, 0.95) 50%, rgba(245, 230, 211, 0.98) 100%);
+  padding: 50px 40px;
+  border-radius: 25px;
+  border: 3px solid rgba(212, 165, 116, 0.6);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 40px rgba(212, 165, 116, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  max-width: 450px;
+  width: 90%;
+  animation: modalSlideIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 35px;
+}
+
+.login-header h2 {
+  color: #3d2f1f;
+  margin: 0 0 10px 0;
+  font-size: clamp(28px, 5vw, 36px);
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(255, 255, 255, 0.5);
+}
+
+.login-header p {
+  color: #6b5d4f;
+  font-size: clamp(14px, 3vw, 16px);
+  margin: 0;
+}
+
+.login-form-group {
+  margin-bottom: 25px;
+}
+
+.login-form-group label {
+  display: block;
+  color: #3d2f1f;
+  font-weight: 600;
+  margin-bottom: 8px;
+  font-size: 16px;
+}
+
+.login-input {
+  width: 100%;
+  padding: 15px 20px;
+  border: 2px solid rgba(212, 165, 116, 0.5);
+  border-radius: 12px;
+  font-size: 16px;
+  font-family: 'Roboto', sans-serif;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.login-input:focus {
+  outline: none;
+  border-color: rgba(212, 165, 116, 0.8);
+  box-shadow: 0 0 0 3px rgba(212, 165, 116, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.login-submit-btn {
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(245, 230, 211, 0.95) 0%, rgba(212, 165, 116, 0.9) 50%, rgba(201, 152, 74, 0.95) 100%);
+  color: #3d2f1f;
+  border: 2px solid rgba(212, 165, 116, 0.6);
+  border-radius: 50px;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(61, 47, 31, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-family: 'Roboto', sans-serif;
+}
+
+.login-submit-btn:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 12px 32px rgba(61, 47, 31, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.login-hint {
+  text-align: center;
+  color: #8b6f47;
+  font-size: 13px;
+  margin: 15px 0 0 0;
+}
+
+/* Logout Button Styles */
+#logoutButton {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 10001;
+  display: none;
+}
+
+#logoutButton button {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+  color: white;
+  border: 3px solid #8b0000;
+  border-radius: 50px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+  transition: all 0.3s ease;
+  font-family: 'Roboto', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#logoutButton button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(231, 76, 60, 0.6);
+}
+
+/* Login Animations */
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Responsive Design for Login */
+@media (max-width: 768px) {
+  #logoutButton {
+    top: 10px;
+    right: 10px;
+  }
+
+  #logoutButton button {
+    padding: 10px 20px;
+    font-size: 12px;
+    gap: 5px;
+  }
+
+  .login-modal-content {
+    padding: 35px 25px;
+  }
+}

@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/teachermatch.css">
 <style>
 * {
   font-family: 'Roboto', sans-serif !important;
@@ -319,6 +320,7 @@ button { cursor:pointer; }
 <body>
 
 <div class="info-section">
+  <h1>กิจกรรมเลข</h1>
   <h3>กรอกข้อมูลกิจกรรม</h3>
   
   <div class="info-inputs">
@@ -356,7 +358,23 @@ button { cursor:pointer; }
   <div id="questionsList" style="max-height:400px; overflow-y:auto;"></div>
 </div>
 
-<button class="neon-btn" onclick="saveConfig()" style="margin-top:20px;">เริ่มกิจกรรม</button>
+<!-- Control Buttons -->
+<div style="display: flex; justify-content: center; gap: 15px; margin: 20px auto; max-width: 900px; flex-wrap: wrap;">
+  <button class="neon-btn" onclick="saveConfig()" style="font-size: clamp(0.9rem, 1.8vw, 1.2rem); padding: 12px 25px;">เริ่มกิจกรรม</button>
+  <button class="neon-btn" onclick="saveActivity()" style="font-size: clamp(0.9rem, 1.8vw, 1.2rem); padding: 12px 25px;">บันทึกกิจกรรม</button>
+  <button class="neon-btn" onclick="loadActivity()" style="font-size: clamp(0.9rem, 1.8vw, 1.2rem); padding: 12px 25px;">เลือกกิจกรรม</button>
+</div>
+
+<!-- Activity Selection Modal -->
+<div id="activityModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 9999; align-items: center; justify-content: center;">
+  <div style="background: linear-gradient(135deg, #f8f6f0 0%, #ebd09e 100%); padding: 30px; border-radius: 20px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; border: 5px solid #74640a;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+      <h2 style="margin: 0; color: #251f03;">เลือกกิจกรรมที่บันทึกไว้</h2>
+      <button onclick="closeActivityModal()" style="background: #e74c3c; color: white; border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 20px;">✖</button>
+    </div>
+    <div id="activityList"></div>
+  </div>
+</div>
 
 <script>
 let correctAnswers = [];
@@ -647,7 +665,190 @@ function saveConfig(){
   // เด้งไปหน้าเกม
   window.location.href='gamemath.html';
 }
+
+// ฟังก์ชันบันทึกกิจกรรม
+function saveActivity() {
+  const week = document.getElementById('weekInput').value.trim();
+  const topic = document.getElementById('topicInput').value.trim();
+  const unit = document.getElementById('unitInput').value.trim();
+  const teacher = document.getElementById('teacherInput').value.trim();
+
+  if(!week){ alert("กรุณากรอกสัปดาห์ที่"); return; }
+  if(!topic){ alert("กรุณากรอกสาระการเรียนรู้"); return; }
+  if(!unit){ alert("กรุณากรอกหน่วยการเรียนรู้"); return; }
+  if(!teacher){ alert("กรุณากรอกชื่อผู้รับผิดชอบ"); return; }
+  if(allQuestions.length === 0){ alert("กรุณาเพิ่มโจทย์อย่างน้อย 1 ข้อ"); return; }
+
+  let savedActivities = JSON.parse(localStorage.getItem('savedActivities') || '[]');
+  
+  // ตรวจสอบว่ากำลังแก้ไขกิจกรรมเดิมหรือไม่
+  if (window.editingActivityId) {
+    const activity = savedActivities.find(a => a.id === window.editingActivityId);
+    
+    if (activity) {
+      // อัพเดตข้อมูลกิจกรรมเดิม
+      activity.config = {
+        week: week,
+        topic: topic,
+        unit: unit,
+        teacher: teacher,
+        questions: allQuestions
+      };
+      activity.topic = topic;
+      activity.savedAtDisplay = new Date().toLocaleString('th-TH');
+      
+      localStorage.setItem('savedActivities', JSON.stringify(savedActivities));
+      
+      alert(`✅ อัพเดตกิจกรรม "${activity.name}" สำเร็จ!`);
+      
+      // ล้างสถานะการแก้ไข
+      delete window.editingActivityId;
+      delete window.editingActivityName;
+      return;
+    }
+  }
+  
+  // บันทึกกิจกรรมใหม่
+  const activityName = prompt('ตั้งชื่อกิจกรรม:', `${topic} - สัปดาห์ ${week}`);
+  
+  if (!activityName) return;
+  
+  const activity = {
+    id: Date.now(),
+    name: activityName,
+    type: 'math',
+    topic: topic,
+    config: {
+      week: week,
+      topic: topic,
+      unit: unit,
+      teacher: teacher,
+      questions: allQuestions
+    },
+    savedAt: new Date().toISOString(),
+    savedAtDisplay: new Date().toLocaleString('th-TH')
+  };
+  
+  savedActivities.push(activity);
+  localStorage.setItem('savedActivities', JSON.stringify(savedActivities));
+  
+  alert(`✅ บันทึกกิจกรรม "${activityName}" สำเร็จ!`);
+}
+
+// ฟังก์ชันโหลดกิจกรรม
+function loadActivity() {
+  const savedActivities = JSON.parse(localStorage.getItem('savedActivities') || '[]');
+  const mathActivities = savedActivities.filter(a => a.type === 'math');
+  
+  if (mathActivities.length === 0) {
+    alert('ยังไม่มีกิจกรรมที่บันทึกไว้');
+    return;
+  }
+  
+  const activityList = document.getElementById('activityList');
+  activityList.innerHTML = mathActivities.map(activity => `
+    <div style="background: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; border: 3px solid #74640a; transition: transform 0.2s;" 
+         onmouseover="this.style.transform='scale(1.02)'"
+         onmouseout="this.style.transform='scale(1)'">
+      <div style="display: flex; justify-content: space-between; align-items: start;">
+        <div style="flex: 1; cursor: pointer;" onclick="selectActivity(${activity.id})">
+          <h3 style="margin: 0 0 8px 0; color: #333; font-size: 18px;">📚 ${activity.name}</h3>
+          <p style="margin: 4px 0; color: #666; font-size: 14px;">สาระ: ${activity.topic}</p>
+          <p style="margin: 4px 0; color: #999; font-size: 12px;">บันทึก: ${activity.savedAtDisplay}</p>
+          <p style="margin: 4px 0; color: #667eea; font-size: 14px; font-weight: 600;">จำนวนโจทย์: ${activity.config.questions?.length || 0} ข้อ</p>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button onclick="event.stopPropagation(); editActivity(${activity.id})" 
+                  style="background: #3498db; color: white; border: none; border-radius: 50%; width: 35px; height: 35px; cursor: pointer; font-size: 18px;">
+            ✏️
+          </button>
+          <button onclick="event.stopPropagation(); deleteActivity(${activity.id})" 
+                  style="background: #e74c3c; color: white; border: none; border-radius: 50%; width: 35px; height: 35px; cursor: pointer; font-size: 18px;">
+            🗑️
+          </button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+  
+  document.getElementById('activityModal').style.display = 'flex';
+}
+
+// เลือกกิจกรรม
+function selectActivity(activityId) {
+  const savedActivities = JSON.parse(localStorage.getItem('savedActivities') || '[]');
+  const activity = savedActivities.find(a => a.id === activityId);
+  
+  if (!activity) {
+    alert('ไม่พบกิจกรรมนี้');
+    return;
+  }
+  
+  // โหลดข้อมูลลงในฟอร์ม
+  const config = activity.config;
+  document.getElementById('weekInput').value = config.week || '';
+  document.getElementById('topicInput').value = config.topic || '';
+  document.getElementById('unitInput').value = config.unit || '';
+  document.getElementById('teacherInput').value = config.teacher || '';
+  
+  allQuestions = config.questions || [];
+  renderQuestionsList();
+  
+  closeActivityModal();
+  
+  alert(`✅ โหลดกิจกรรล "${activity.name}" สำเร็จ!`);
+}
+
+// แก้ไขกิจกรรม
+function editActivity(activityId) {
+  const savedActivities = JSON.parse(localStorage.getItem('savedActivities') || '[]');
+  const activity = savedActivities.find(a => a.id === activityId);
+  
+  if (!activity) {
+    alert('ไม่พบกิจกรรมนี้');
+    return;
+  }
+  
+  // โหลดข้อมูลลงในฟอร์มเพื่อแก้ไข
+  const config = activity.config;
+  document.getElementById('weekInput').value = config.week || '';
+  document.getElementById('topicInput').value = config.topic || '';
+  document.getElementById('unitInput').value = config.unit || '';
+  document.getElementById('teacherInput').value = config.teacher || '';
+  
+  allQuestions = config.questions || [];
+  renderQuestionsList();
+  
+  // เก็บ ID กิจกรรมที่กำลังแก้ไข
+  window.editingActivityId = activityId;
+  window.editingActivityName = activity.name;
+  
+  closeActivityModal();
+  
+  // แจ้งเตือนว่ากำลังแก้ไข
+  alert(`📝 กำลังแก้ไขกิจกรรม "${activity.name}"\n\nแก้ไขข้อมูลได้เลย แล้วกด "💾 บันทึกกิจกรรม" เพื่ออัพเดต`);
+}
+
+// ลบกิจกรรม
+function deleteActivity(activityId) {
+  if (!confirm('ต้องการลบกิจกรรมนี้หรือไม่?')) return;
+  
+  let savedActivities = JSON.parse(localStorage.getItem('savedActivities') || '[]');
+  savedActivities = savedActivities.filter(a => a.id !== activityId);
+  localStorage.setItem('savedActivities', JSON.stringify(savedActivities));
+  
+  loadActivity();
+}
+
+// ปิด Modal
+function closeActivityModal() {
+  document.getElementById('activityModal').style.display = 'none';
+}
+
 </script>
 
+<!-- Socket client (connect + heartbeat) -->
+<script src="/socket.io/socket.io.js"></script>
+<script src="/socket-client.js"></script>
 </body>
 </html>
