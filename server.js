@@ -55,8 +55,26 @@ app.post('/uploadBase64', async (req, res) => {
 // --- Usage tracking endpoints (start / end / event) ---
 app.post('/api/usage/start', async (req, res) => {
   try {
-    const { clientId, page, section, timestamp } = req.body || {}
+    let { clientId, page, section, timestamp } = req.body || {}
     const startAt = timestamp || new Date().toISOString()
+    // If clientId not provided, check cookie header for huaroa_client_id
+    try {
+      if (!clientId && req.headers && req.headers.cookie) {
+        const cookies = String(req.headers.cookie).split(';').map(s => s.trim())
+        for (const c of cookies) {
+          if (c.startsWith('huaroa_client_id=')) {
+            clientId = decodeURIComponent(c.split('=')[1] || '')
+            break
+          }
+        }
+      }
+      // if still no clientId, create one and set cookie so browser will persist it
+      if (!clientId) {
+        clientId = 'c-' + Math.random().toString(36).slice(2) + '-' + Date.now().toString(36)
+        // set cookie for 365 days
+        try { res.setHeader('Set-Cookie', `huaroa_client_id=${encodeURIComponent(clientId)}; Path=/; HttpOnly`); } catch(e){}
+      }
+    } catch(e) { /* ignore cookie parsing errors */ }
     const doc = {
       client_id: clientId || null,
       page: page || null,
@@ -78,6 +96,12 @@ app.post('/api/usage/start', async (req, res) => {
     }
     // Append to per-page file log as well
     appendUsageLog(page || 'unknown', Object.assign({ type: 'start', usageId }, doc))
+    // Record unique daily page user (if clientId provided)
+    try {
+      if (clientId && page) await recordDailyPageUser(clientId, page)
+    } catch (err) {
+      console.warn('[WARN] recordDailyPageUser call failed', err && err.message)
+    }
     return res.json({ success: true, usageId, doc })
   } catch (e) {
     console.error('[ERROR] /api/usage/start', e)
@@ -209,6 +233,8 @@ let sessionsColl
 let feedbacksColl
 let usageColl
 let mdb
+let dailyPageUsersColl
+let dailyPageCountsColl
 const pageUsageColls = new Map()
 
 function safeCollectionNameForPage(page) {
@@ -246,12 +272,22 @@ try {
   sessionsColl = mdb.collection('sessions')
   // usage events collection for per-page / per-section tracking
   usageColl = mdb.collection('usage_events')
+  // daily page users: track unique client_id per page per day
+  dailyPageUsersColl = mdb.collection('daily_page_users')
+  dailyPageCountsColl = mdb.collection('daily_page_counts')
   feedbacksColl = mdb.collection('feedbacks')
   await sessionsColl.createIndex({ client_id: 1 })
   if (usageColl) {
     await usageColl.createIndex({ client_id: 1 })
     await usageColl.createIndex({ page: 1 })
     await usageColl.createIndex({ section: 1 })
+  }
+  // ensure indexes for daily page tracking
+  if (dailyPageUsersColl) {
+    await dailyPageUsersColl.createIndex({ client_id: 1, page: 1, day: 1 }, { unique: true })
+  }
+  if (dailyPageCountsColl) {
+    await dailyPageCountsColl.createIndex({ page: 1, day: 1 }, { unique: true })
   }
   // ensure unique index on client_id + day
   await dailyUsersColl.createIndex({ client_id: 1, day: 1 }, { unique: true })
@@ -284,6 +320,33 @@ async function recordDailyUser(clientId) {
   } catch (e) {
     // ignore duplicate key or other transient errors
     console.error('[WARN] recordDailyUser failed', e && e.message)
+  }
+}
+
+async function recordDailyPageUser(clientId, page) {
+  if (!clientId || !page) return
+  if (!dailyPageUsersColl || !dailyPageCountsColl) return
+  try {
+    const day = new Date().toISOString().slice(0, 10)
+    const createdAt = new Date().toISOString()
+    // try to insert unique record per client+page+day
+    const upsertRes = await dailyPageUsersColl.updateOne(
+      { client_id: clientId, page, day },
+      { $setOnInsert: { created_at: createdAt } },
+      { upsert: true }
+    )
+    // if upserted (new unique user for this page/day), increment counter
+    const inserted = (upsertRes.upsertedCount && upsertRes.upsertedCount > 0)
+    if (inserted) {
+      await dailyPageCountsColl.updateOne(
+        { page, day },
+        { $inc: { count: 1 }, $setOnInsert: { created_at: createdAt } },
+        { upsert: true }
+      )
+      console.log(`[DEBUG] Recorded daily page user ${clientId} for ${page} on ${day}`)
+    }
+  } catch (e) {
+    console.error('[WARN] recordDailyPageUser failed', e && e.message)
   }
 }
 
@@ -722,6 +785,61 @@ app.get('/status/usage-by-page', async (req, res) => {
     res.json({ success: true, data: out, timestamp: new Date().toISOString() })
   } catch (e) {
     console.error('[ERROR] /status/usage-by-page', e)
+    res.status(500).json({ success: false, message: 'failed' })
+  }
+})
+
+// Returns daily page counts. Usage:
+// /status/daily-page-counts?page=/gamepicture&day=2025-11-25
+// /status/daily-page-counts?page=/gamepicture&limit=7  (last 7 days for page)
+// /status/daily-page-counts?day=2025-11-25  (all pages for a given day)
+app.get('/status/daily-page-counts', async (req, res) => {
+  try {
+    if (!dailyPageCountsColl) return res.json({ success: false, message: 'DB not available' })
+    const page = req.query.page || null
+    const day = req.query.day || null
+    const limit = Math.min(120, parseInt(req.query.limit || '30', 10))
+
+    if (page && day) {
+      const doc = await dailyPageCountsColl.findOne({ page, day })
+      return res.json({ success: true, data: doc ? { page: doc.page, day: doc.day, count: doc.count || 0 } : { page, day, count: 0 }, source: 'db', timestamp: new Date().toISOString() })
+    }
+
+    if (page && !day) {
+      // last N days for page
+      const docs = await dailyPageCountsColl.find({ page }).sort({ day: -1 }).limit(limit).toArray()
+      return res.json({ success: true, data: docs.map(d => ({ page: d.page, day: d.day, count: d.count || 0 })), source: 'db', timestamp: new Date().toISOString() })
+    }
+
+    if (!page && day) {
+      // all pages for a specific day
+      const docs = await dailyPageCountsColl.find({ day }).sort({ count: -1 }).toArray()
+      return res.json({ success: true, data: docs.map(d => ({ page: d.page, day: d.day, count: d.count || 0 })), source: 'db', timestamp: new Date().toISOString() })
+    }
+
+    // neither page nor day: return recent entries (by day desc)
+    const docs = await dailyPageCountsColl.find({}).sort({ day: -1, page: 1 }).limit(limit).toArray()
+    return res.json({ success: true, data: docs.map(d => ({ page: d.page, day: d.day, count: d.count || 0 })), source: 'db', timestamp: new Date().toISOString() })
+  } catch (e) {
+    console.error('[ERROR] /status/daily-page-counts', e)
+    res.status(500).json({ success: false, message: 'failed' })
+  }
+})
+
+// Returns the list of unique client ids for a given page and day
+// Usage: /status/daily-page-users?page=/gamepicture&day=2025-11-25
+app.get('/status/daily-page-users', async (req, res) => {
+  try {
+    if (!dailyPageUsersColl) return res.json({ success: false, message: 'DB not available' })
+    const page = req.query.page || null
+    const day = req.query.day || null
+    if (!page || !day) return res.json({ success: false, message: 'page and day required' })
+
+    const q = { page, day }
+    const docs = await dailyPageUsersColl.find(q).project({ _id: 0, client_id: 1, created_at: 1 }).toArray()
+    return res.json({ success: true, page, day, count: docs.length, users: docs, source: 'db', timestamp: new Date().toISOString() })
+  } catch (e) {
+    console.error('[ERROR] /status/daily-page-users', e)
     res.status(500).json({ success: false, message: 'failed' })
   }
 })
