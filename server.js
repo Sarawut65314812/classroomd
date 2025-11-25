@@ -19,9 +19,7 @@ app.get("/teacherpicture", (req, res) => res.sendFile(path.join(__dirname, "teac
 app.get("/teacherthai", (req, res) => res.sendFile(path.join(__dirname, "teacherthai.html")));
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-// Allow large JSON bodies (for base64 PDF uploads). Default is too small for PDFs.
-app.use(express.json({ limit: '50mb' }))
-app.use(express.urlencoded({ extended: true, limit: '50mb' }))
+app.use(express.json())
 app.use(express.static(__dirname))
 
 // In-memory storage
@@ -302,37 +300,6 @@ app.post("/api/feedback", async (req, res) => {
       success: false,
       message: "เกิดข้อผิดพลาดในการบันทึกข้อเสนอแนะ",
     });
-  }
-})
-
-// Endpoint: รับไฟล์เป็น DataURL (base64) แล้วบันทึกไปที่ /uploads และคืน URL กลับ
-app.post('/uploadBase64', async (req, res) => {
-  try {
-    const { filename, dataUrl } = req.body || {}
-    if (!filename || !dataUrl) return res.status(400).json({ success: false, message: 'filename and dataUrl required' })
-
-    // สร้างโฟลเดอร์ uploads ถ้ายังไม่มี
-    const uploadsDir = path.join(__dirname, 'uploads')
-    if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true })
-
-    // dataUrl: data:<mime>;base64,<base64data>
-    const matches = String(dataUrl).match(/^data:(.+);base64,(.+)$/)
-    if (!matches) return res.status(400).json({ success: false, message: 'invalid dataUrl' })
-    const mime = matches[1]
-    const b64 = matches[2]
-    const buffer = Buffer.from(b64, 'base64')
-
-    // ป้องกันชื่อชนกัน: เพิ่ม timestamp
-    const safeName = `${Date.now()}-${path.basename(filename)}`
-    const outPath = path.join(uploadsDir, safeName)
-    fs.writeFileSync(outPath, buffer)
-
-    const fileUrl = `${req.protocol}://${req.get('host')}/uploads/${safeName}`
-    console.log('[UPLOAD] saved', outPath, '->', fileUrl)
-    res.json({ success: true, url: fileUrl })
-  } catch (e) {
-    console.error('[UPLOAD] error', e)
-    res.status(500).json({ success: false, message: 'upload failed' })
   }
 })
 
