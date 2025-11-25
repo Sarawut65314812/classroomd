@@ -23,6 +23,7 @@ body {
   min-height: 100vh;
 }
 
+
 body::before {
   content: '';
   position: fixed;
@@ -214,7 +215,7 @@ body::before {
         <button onclick="shareScore(); toggleShareMenu();" style="width: 100%; padding: 18px 20px; border: none; background: linear-gradient(135deg, #2196F3, #1E88E5); color: white; cursor: pointer; font-size: 18px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 12px; transition: all 0.3s; text-shadow: 0 1px 2px rgba(0,0,0,0.2);" onmouseover="this.style.background='linear-gradient(135deg, #1976D2, #1565C0)'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='linear-gradient(135deg, #2196F3, #1E88E5)'; this.style.transform='scale(1)';">
           <span style="font-size: 28px;">🔗</span> แชร์ผลกิจกรรม
         </button>
-        </button>
+        
         <button onclick="exportToPDF(); toggleShareMenu();" style="width: 100%; padding: 18px 20px; border: none; background: linear-gradient(135deg, #FF9800, #F57C00); color: white; cursor: pointer; font-size: 18px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 12px; transition: all 0.3s; border-top: 2px solid rgba(255,255,255,0.3); text-shadow: 0 1px 2px rgba(0,0,0,0.2);" onmouseover="this.style.background='linear-gradient(135deg, #F57C00, #E65100)'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='linear-gradient(135deg, #FF9800, #F57C00)'; this.style.transform='scale(1)';">
           <span style="font-size: 28px;">📥</span> ดาวน์โหลด
         </button>
@@ -644,16 +645,12 @@ async function shareScore() {
     const pdfContent = `
       <div style="font-family: 'Arial', sans-serif; color: #333;">
         <div style="text-align: center; margin-bottom: 12px;">
-          <img src='picture/Huaroa.jpg' alt='Logo' style='height: 220px; width: auto; max-width: 100%; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;' />
+          <img src='/picture/Huaroa.jpg' alt='Logo' style='height: 220px; width: auto; max-width: 100%; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;' />
         </div>
         <div style="text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
           <h1 style="margin: 5px 0; font-size: 24px;">รายงานผลการประเมิน</h1>
           <p style="margin: 5px 0; font-size: 14px;">Smart Classroom Learning System</p>
           <p style="margin: 5px 0; font-size: 12px;">วันที่: ${dateStr} เวลา: ${timeStr}</p>
-        </div>
-        <div style="background: #f8f9fa; border: 3px solid #667eea; border-radius: 10px; padding: 20px; margin-bottom: 20px; text-align: center;">
-          <p style="font-size: 16px; margin: 0 0 15px 0; color: #555;"><strong>คะแนนที่ได้รับ</strong></p>
-          <p style="font-size: 28px; color: #27ae60; font-weight: bold;">${score}/${allQuestions.length}</p>
         </div>
         <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
           <p style="font-size: 14px; font-weight: bold; margin: 0 0 10px 0; color: #667eea;">ข้อมูลกิจกรรม</p>
@@ -676,7 +673,11 @@ async function shareScore() {
             </tr>
           </table>
         </div>
-        <div style="margin-top: 400px; text-align: center;">
+        <div style="background: #f8f9fa; border: 3px solid #667eea; border-radius: 10px; padding: 20px; margin-bottom: 20px; text-align: center;">
+          <p style="font-size: 16px; margin: 0 0 15px 0; color: #555;"><strong>คะแนนที่ได้รับ</strong></p>
+          <p style="font-size: 28px; color: #27ae60; font-weight: bold;">${score}/${allQuestions.length}</p>
+        </div>
+        <div style="margin-top: 300px; text-align: center;">
           <p style="margin: 0; font-size: 13px; color: #333;">ลงชื่อ _______________________</p>
           <p style="margin: 8px 0 0 0; font-size: 13px; color: #333;">ครูผู้รับผิดชอบ</p>
           <p style="margin: 5px 0 0 0; font-size: 13px; color: #333;">( _______________________ )</p>
@@ -687,18 +688,80 @@ async function shareScore() {
     const element = document.createElement('div');
     element.innerHTML = pdfContent;
 
-    html2pdf().set(opt).from(element).output('blob').then(blob => {
-      const file = new File([blob], opt.filename, { type: 'application/pdf' });
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        navigator.share({
-          files: [file],
-          title: 'Smart Classroom - ผลการทดสอบ',
-          text: `ผลการทดสอบ: ${score}/${allQuestions.length}`
-        }).catch(err => console.log('Error sharing:', err));
-      } else {
-        html2pdf().set(opt).from(element).save();
+    // สร้าง PDF เป็น blob
+    const pdfBlob = await html2pdf().set(opt).from(element).output('blob')
+
+    // แปลง blob เป็น dataURL เพื่อส่งขึ้น server
+    const blobToDataURL = blob => new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result)
+      reader.onerror = reject
+      reader.readAsDataURL(blob)
+    })
+    const dataUrl = await blobToDataURL(pdfBlob)
+
+    // อัปโหลดไปยัง server (POST /uploadBase64)
+    const uploadRes = await fetch('/uploadBase64', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filename: opt.filename, dataUrl })
+    })
+    const uploadJson = await uploadRes.json()
+    if (!uploadJson || !uploadJson.success) {
+      // fallback: ดาวน์โหลด PDF
+      html2pdf().set(opt).from(element).save()
+      return alert('อัปโหลดไฟล์ล้มเหลว ระบบจะดาวน์โหลด PDF ให้แทน')
+    }
+
+    const publicUrl = uploadJson.url
+
+    // พยายามใช้ Web Share API เพื่อแชร์ลิงก์ (URL)
+    const shareText = `ผลการทดสอบ: ${score}/${allQuestions.length}`
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: 'Smart Classroom - ผลการทดสอบ', text: shareText, url: publicUrl })
+        return
       }
-    });
+    } catch (err) {
+      console.warn('navigator.share failed for URL share:', err)
+    }
+
+    // ถ้า Web Share API ไม่รองรับ แชร์ผ่านลิงก์ของแต่ละแพลตฟอร์ม (เปิดหน้าต่างใหม่)
+    const encodedUrl = encodeURIComponent(publicUrl)
+    const encodedText = encodeURIComponent(shareText)
+    const lineUrl = `https://social-plugins.line.me/lineit/share?url=${encodedUrl}`
+    const waUrl = `https://api.whatsapp.com/send?text=${encodedText}%20${encodedUrl}`
+    const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`
+    const tgUrl = `https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`
+
+    // helper: try to open a deep-link URI (custom scheme) and fallback to web URL
+    function tryOpenUri(uri, fallback) {
+      try {
+        const start = Date.now()
+        // attempt to navigate to the custom scheme
+        window.location.href = uri
+        setTimeout(() => {
+          // fallback after short delay
+          window.open(fallback, '_blank')
+        }, 800)
+      } catch (e) {
+        window.open(fallback, '_blank')
+      }
+    }
+
+    const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
+    if (isMobile) {
+      // On mobile, open LINE web share (it typically forwards to app), otherwise user can choose
+      window.open(lineUrl, '_blank')
+    } else {
+      // Desktop: try deep link to LINE native app first, then fallback to LINE web
+      const lineDeep = `line://msg/text/${encodedText}%20${encodedUrl}`
+      tryOpenUri(lineDeep, lineUrl)
+      // copy to clipboard to help user paste to any chat
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        try { await navigator.clipboard.writeText(publicUrl) } catch (e) { /* ignore */ }
+      }
+    }
   } catch (error) {
     console.error('Error sharing PDF:', error);
   }
