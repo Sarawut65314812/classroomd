@@ -468,7 +468,7 @@ function loadSavedActivities() {
 
   activityList.innerHTML = savedActivities.map(activity => `
     <div style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; margin-bottom: 10px;">
-      <h3 style="cursor: pointer; color: #3498db; text-decoration: underline;" onclick="selectActivity(${activity.id})">${activity.name}</h3>
+      <h3 style="cursor: pointer; color: #3498db; text-decoration: underline;" onclick="playActivity(${activity.id})">${activity.name}</h3>
       <p>สาระ: ${activity.topic}</p>
       <p>สัปดาห์ที่: ${activity.config.week}</p>
     </div>
@@ -505,7 +505,7 @@ function loadSavedActivities() {
   // Updated the activity list to make activity names clickable for direct play
   activityList.innerHTML = savedActivities.map(activity => `
     <div style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; margin-bottom: 10px;">
-      <h3 style="cursor: pointer; color: #3498db; text-decoration: underline;" onclick="selectActivity(${activity.id})">${activity.name}</h3>
+      <h3 style="cursor: pointer; color: #3498db; text-decoration: underline;" onclick="playActivity(${activity.id})">${activity.name}</h3>
       <p>สาระ: ${activity.topic}</p>
       <p>สัปดาห์ที่: ${activity.config.week}</p>
     </div>
@@ -532,6 +532,23 @@ function selectActivity(activityId) {
 // Function to close the activity modal
 function closeActivityModal() {
   document.getElementById('activityModal').style.display = 'none';
+}
+
+// Start/play activity immediately from the saved activity card
+function playActivity(activityId) {
+  const savedActivities = JSON.parse(localStorage.getItem('savedActivities') || '[]');
+  const activity = savedActivities.find(a => a.id === activityId);
+  if (!activity) { alert('ไม่พบกิจกรรมนี้'); return; }
+
+  // Save config and navigate/reload to start the game
+  localStorage.setItem('emojiGameConfig', JSON.stringify(activity.config));
+  // If we're already on gamepicture.html, reload to pick up the new config
+  const current = window.location.pathname.split('/').pop();
+  if (current === 'gamepicture.html' || current === '') {
+    window.location.reload();
+  } else {
+    window.location.href = 'gamepicture.html';
+  }
 }
 
 // Automatically load and start the game on page load

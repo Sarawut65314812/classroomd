@@ -338,12 +338,12 @@ function loadActivity() {
   }
   
   const activityList = document.getElementById('activityList');
-  activityList.innerHTML = pictureActivities.map(activity => `
+    activityList.innerHTML = pictureActivities.map(activity => `
     <div style="background: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; border: 3px solid #74640a; transition: transform 0.2s;" 
          onmouseover="this.style.transform='scale(1.02)'"
          onmouseout="this.style.transform='scale(1)'">
       <div style="display: flex; justify-content: space-between; align-items: start;">
-        <div style="flex: 1; cursor: pointer;" onclick="selectActivity(${activity.id})">
+        <div style="flex: 1; cursor: pointer;" onclick="playActivity(${activity.id})">
           <h3 style="margin: 0 0 8px 0; color: #333; font-size: 18px;">🖼️ ${activity.name}</h3>
           <p style="margin: 4px 0; color: #666; font-size: 14px;">สาระ: ${activity.topic}</p>
           <p style="margin: 4px 0; color: #666; font-size: 14px;">หัวข้อ: ${activity.mainTopic || '-'}</p>
@@ -394,6 +394,25 @@ function selectActivity(activityId) {
   
   alert(`✅ โหลดกิจกรรม "${activity.name}" สำเร็จ!`);
 }
+
+  // เริ่มเล่นกิจกรรมทันที (navigate to the appropriate game page)
+  function playActivity(activityId) {
+    const savedActivities = JSON.parse(localStorage.getItem('savedActivities') || '[]');
+    const activity = savedActivities.find(a => a.id === activityId);
+    if (!activity) { alert('ไม่พบกิจกรรมนี้'); return; }
+
+    localStorage.setItem('emojiGameConfig', JSON.stringify(activity.config));
+    const type = activity.type || 'picture';
+    if (type === 'picture') {
+      window.location.href = 'gamepicture.html';
+    } else if (type === 'math') {
+      window.location.href = 'gamemath.html';
+    } else if (type === 'thai') {
+      window.location.href = 'gamethai.html';
+    } else {
+      window.location.href = 'gamepicture.html';
+    }
+  }
 
 // แก้ไขกิจกรรม
 function editActivity(activityId) {

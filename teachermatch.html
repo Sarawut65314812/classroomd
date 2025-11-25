@@ -750,7 +750,7 @@ function loadActivity() {
          onmouseover="this.style.transform='scale(1.02)'"
          onmouseout="this.style.transform='scale(1)'">
       <div style="display: flex; justify-content: space-between; align-items: start;">
-        <div style="flex: 1; cursor: pointer;" onclick="selectActivity(${activity.id})">
+        <div style="flex: 1; cursor: pointer;" onclick="playActivity(${activity.id})">
           <h3 style="margin: 0 0 8px 0; color: #333; font-size: 18px;">📚 ${activity.name}</h3>
           <p style="margin: 4px 0; color: #666; font-size: 14px;">สาระ: ${activity.topic}</p>
           <p style="margin: 4px 0; color: #999; font-size: 12px;">บันทึก: ${activity.savedAtDisplay}</p>
@@ -796,6 +796,27 @@ function selectActivity(activityId) {
   closeActivityModal();
   
   alert(`✅ โหลดกิจกรรล "${activity.name}" สำเร็จ!`);
+}
+
+// เริ่มเล่นกิจกรรมทันที (navigate to the appropriate game page)
+function playActivity(activityId) {
+  const savedActivities = JSON.parse(localStorage.getItem('savedActivities') || '[]');
+  const activity = savedActivities.find(a => a.id === activityId);
+  if (!activity) { alert('ไม่พบกิจกรรมนี้'); return; }
+
+  // Save config for the game page and navigate based on activity type
+  localStorage.setItem('emojiGameConfig', JSON.stringify(activity.config));
+  const type = activity.type || 'math';
+  if (type === 'math') {
+    window.location.href = 'gamemath.html';
+  } else if (type === 'picture') {
+    window.location.href = 'gamepicture.html';
+  } else if (type === 'thai') {
+    window.location.href = 'gamethai.html';
+  } else {
+    // default to math
+    window.location.href = 'gamemath.html';
+  }
 }
 
 // แก้ไขกิจกรรม
