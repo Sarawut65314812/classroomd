@@ -1,7 +1,3 @@
-// Serve catagoly.html at /catagoly
-app.get("/catagoly", (req, res) => {
-  res.sendFile(path.join(__dirname, "catagoly.html"));
-});
 import express from "express"
 import path from "path"
 import { fileURLToPath } from "url"
@@ -11,6 +7,16 @@ import fs from "fs"
 import { MongoClient } from 'mongodb'
 
 const app = express()
+
+// Serve static HTML pages by route (ต้องอยู่หลัง const app = express())
+app.get("/catagoly", (req, res) => res.sendFile(path.join(__dirname, "catagoly.html")));
+app.get("/menu", (req, res) => res.sendFile(path.join(__dirname, "menu.html")));
+app.get("/gamemath", (req, res) => res.sendFile(path.join(__dirname, "gamemath.html")));
+app.get("/gamepicture", (req, res) => res.sendFile(path.join(__dirname, "gamepicture.html")));
+app.get("/gamethai", (req, res) => res.sendFile(path.join(__dirname, "gamethai.html")));
+app.get("/teachermatch", (req, res) => res.sendFile(path.join(__dirname, "teachermatch.html")));
+app.get("/teacherpicture", (req, res) => res.sendFile(path.join(__dirname, "teacherpicture.html")));
+app.get("/teacherthai", (req, res) => res.sendFile(path.join(__dirname, "teacherthai.html")));
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 app.use(express.json())
