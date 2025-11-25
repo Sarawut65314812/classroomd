@@ -25,7 +25,8 @@
         }
 
         .root-bg::before,
-        .root-bg::after {
+        .root-bg::after,
+        .root-bg::backdrop {
           content: '';
           position: fixed;
           top: 0; 
@@ -41,7 +42,36 @@
         }
 
         .root-bg::after {
-          background: radial-gradient(circle at 30% 40%, #ebd09e, #251f03);
+          /* Removed background-image */
+          background: none;
+          opacity: 1;
+          pointer-events: none;
+          z-index: 1;
+        }
+
+        /* Centered watermark image */
+        .center-watermark {
+          position: fixed;
+          top: 50%;
+          left: 75%;
+          transform: translate(-50%, -50%);
+          width: 54vw;
+          max-width: 864px;
+          min-width: 216px;
+          opacity: 0.13;
+          z-index: 2;
+          pointer-events: none;
+          user-select: none;
+        }
+
+        /* Watermark background image */
+        .root-bg::backdrop {
+          content: '';
+          background: url('picture/ESPRESSO_logo.png') no-repeat center center;
+          background-size: 55vw auto;
+          opacity: 0.10;
+          pointer-events: none;
+          z-index: 2;
         }
 
         /* Animation */
@@ -562,7 +592,8 @@
 </head>
 <body>
 
-      <div class="root-bg" style="display: flex; flex-direction: column; position: relative; z-index: 10; padding: clamp(2rem,4vw,3rem) 0;">
+  <div class="root-bg" style="display: flex; flex-direction: column; position: relative; z-index: 10; padding: clamp(2rem,4vw,3rem) 0;">
+    <img src="picture/ESPRESSO_logo.png" alt="Watermark" class="center-watermark" />
     <!-- Logo ลายน้ำ - ย้ายมาไว้ข้างนอก -->
 
     <!-- Running Text -->
