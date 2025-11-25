@@ -626,6 +626,58 @@ function saveResult() {
   }
 }
 
+// Build a reusable PDF element used by both download and share flows
+function buildPdfElement() {
+  const date = new Date();
+  const dateStr = date.toLocaleDateString('th-TH');
+  const timeStr = date.toLocaleTimeString('th-TH');
+
+  const element = document.createElement('div');
+  element.innerHTML = `
+    <div style="font-family: 'Arial', sans-serif; color: #333;">
+      <div style="text-align: center; margin-bottom: 12px;">
+        <img src='/picture/Huaroa.jpg' alt='Logo' style='height: 120px; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;' />
+      </div>
+      <div style="text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+        <h1 style="margin: 5px 0; font-size: 24px;">รายงานผลการประเมินกิจกรรมตัวเลข</h1>
+        <p style="margin: 5px 0; font-size: 14px;">Smart Classroom Learning System</p>
+        <p style="margin: 5px 0; font-size: 12px;">วันที่: ${dateStr} เวลา: ${timeStr}</p>
+      </div>
+      <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+        <p style="font-size: 14px; font-weight: bold; margin: 0 0 10px 0; color: #667eea;">ข้อมูลกิจกรรม</p>
+        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+          <tr>
+            <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สัปดาห์ที่:</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.week || '-'}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สาระการเรียนรู้:</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.topic || '-'}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">หน่วยการเรียนรู้:</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.unit || '-'}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ครูผู้รับผิดชอบ:</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.teacher || '-'}</td>
+          </tr>
+        </table>
+      </div>
+      <div style="background: #f8f9fa; border: 3px solid #667eea; border-radius: 10px; padding: 20px; margin-bottom: 20px; text-align: center;">
+        <p style="font-size: 16px; margin: 0 0 15px 0; color: #555;"><strong>คะแนนที่ได้รับ</strong></p>
+        <p style="font-size: 28px; color: #27ae60; font-weight: bold;">${score}/${teacherConfig.correctImages?.length || 0}</p>
+      </div>
+      <div style="margin-top: 300px; text-align: center;">
+        <p style="margin: 0; font-size: 13px; color: #333;">ลงชื่อ _______________________</p>
+        <p style="margin: 8px 0 0 0; font-size: 13px; color: #333;">ครูผู้รับผิดชอบ</p>
+        <p style="margin: 5px 0 0 0; font-size: 13px; color: #333;">( _______________________ )</p>
+      </div>
+    </div>
+  `;
+  return element;
+}
+
 // ฟังก์ชันแชร์ผลเป็น PDF
 async function shareScore() {
   try {
@@ -641,48 +693,8 @@ async function shareScore() {
       jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
     };
 
-    const pdfContent = `
-      <div style="font-family: 'Arial', sans-serif; color: #333;">
-        <div style="text-align: center; margin-bottom: 12px;">
-          <img src='/picture/Huaroa.jpg' alt='Logo' style='height: 220px; width: auto; max-width: 100%; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;' />
-        </div>
-        <div style="text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-          <h1 style="margin: 5px 0; font-size: 24px;">รายงานผลการประเมิน</h1>
-          <p style="margin: 5px 0; font-size: 14px;">Smart Classroom Learning System</p>
-          <p style="margin: 5px 0; font-size: 12px;">วันที่: ${dateStr} เวลา: ${timeStr}</p>
-        </div>
-
-        <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
-          <p style="font-size: 14px; font-weight: bold; margin: 0 0 10px 0; color: #667eea;">ข้อมูลกิจกรรม</p>
-          <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-            <tr>
-              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สัปดาห์ที่:</td>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.week || '-'}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สาระการเรียนรู้:</td>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.topic || '-'}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">หน่วยการเรียนรู้:</td>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.unit || '-'}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ครูผู้รับผิดชอบ:</td>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.teacher || '-'}</td>
-            </tr>
-          </table>
-        </div>
-        <div style="margin-top: 300px; text-align: center;">
-          <p style="margin: 0; font-size: 13px; color: #333;">ลงชื่อ _______________________</p>
-          <p style="margin: 8px 0 0 0; font-size: 13px; color: #333;">ครูผู้รับผิดชอบ</p>
-          <p style="margin: 5px 0 0 0; font-size: 13px; color: #333;">( _______________________ )</p>
-        </div>
-      </div>
-    `;
-
-    const element = document.createElement('div');
-    element.innerHTML = pdfContent;
+    // Use shared PDF element so share and download are identical
+    const element = buildPdfElement();
 
 
     // create PDF blob
@@ -714,14 +726,41 @@ async function shareScore() {
     })
     const dataUrl = await blobToDataURL(pdfBlob)
 
-    // upload to server
-    const uploadRes = await fetch('/uploadBase64', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ filename: opt.filename, dataUrl })
-    })
-    const uploadJson = await uploadRes.json()
+    // upload to server (use absolute origin to avoid accidental localhost targets)
+    console.debug('[SHARE] Uploading PDF to server...', { origin: location.origin })
+    let uploadRes
+    try {
+      uploadRes = await fetch(`${location.origin}/uploadBase64`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename: opt.filename, dataUrl })
+      })
+    } catch (e) {
+      console.error('[SHARE] Network error while uploading PDF:', e)
+      html2pdf().set(opt).from(element).save()
+      return alert('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์เพื่ออัปโหลดไฟล์ได้ ระบบจะดาวน์โหลด PDF ให้แทน')
+    }
+
+    let uploadJson = null
+    if (!uploadRes.ok) {
+      // Try to read server response for debugging
+      let textBody = ''
+      try { textBody = await uploadRes.text() } catch (e) { textBody = '<unreadable response>' }
+      console.error('[SHARE] Upload failed', uploadRes.status, uploadRes.statusText, textBody)
+      html2pdf().set(opt).from(element).save()
+      return alert('อัปโหลดไฟล์ล้มเหลว (เซิร์ฟเวอร์ตอบสถานะ ' + uploadRes.status + ') ระบบจะดาวน์โหลด PDF ให้แทน')
+    }
+
+    try {
+      uploadJson = await uploadRes.json()
+    } catch (e) {
+      console.error('[SHARE] Failed to parse upload JSON response:', e)
+      html2pdf().set(opt).from(element).save()
+      return alert('อัปโหลดไฟล์ล้มเหลว (ตอบกลับไม่ใช่ JSON) ระบบจะดาวน์โหลด PDF ให้แทน')
+    }
+
     if (!uploadJson || !uploadJson.success) {
+      console.error('[SHARE] Upload endpoint returned failure:', uploadJson)
       html2pdf().set(opt).from(element).save()
       return alert('อัปโหลดไฟล์ล้มเหลว ระบบจะดาวน์โหลด PDF ให้แทน')
     }
@@ -816,50 +855,9 @@ function exportToPDF() {
       jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
     };
 
-    const pdfContent = `
-      <div style="font-family: 'Arial', sans-serif; color: #333;">
-        <div style="text-align: center; margin-bottom: 12px;">
-          <img src='/picture/Huaroa.jpg' alt='Logo' style='height: 120px; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;' />
-        </div>
-        <div style="text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-          <h1 style="margin: 5px 0; font-size: 24px;">รายงานผลการประเมินกิจกรรมตัวเลข</h1>
-          <p style="margin: 5px 0; font-size: 14px;">Smart Classroom Learning System</p>
-          <p style="margin: 5px 0; font-size: 12px;">วันที่: ${dateStr} เวลา: ${timeStr}</p>
-        </div>
-              <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
-          <p style="font-size: 14px; font-weight: bold; margin: 0 0 10px 0; color: #667eea;">ข้อมูลกิจกรรม</p>
-          <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-            <tr>
-              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สัปดาห์ที่:</td>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.week || '-'}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สาระการเรียนรู้:</td>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.topic || '-'}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">หน่วยการเรียนรู้:</td>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.unit || '-'}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ครูผู้รับผิดชอบ:</td>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.teacher || '-'}</td>
-            </tr>
-          </table>
-        </div>
-        <div style="background: #f8f9fa; border: 3px solid #667eea; border-radius: 10px; padding: 20px; margin-bottom: 20px; text-align: center;">
-          <p style="font-size: 16px; margin: 0 0 15px 0; color: #555;"><strong>คะแนนที่ได้รับ</strong></p>
-          <p style="font-size: 28px; color: #27ae60; font-weight: bold;">${score}/${teacherConfig.correctImages?.length || 0}</p>
-        </div>
-        <div style="margin-top: 300px; text-align: center;">
-          <p style="margin: 0; font-size: 13px; color: #333;">ลงชื่อ _______________________</p>
-          <p style="margin: 8px 0 0 0; font-size: 13px; color: #333;">ครูผู้รับผิดชอบ</p>
-          <p style="margin: 5px 0 0 0; font-size: 13px; color: #333;">( _______________________ )</p>
-        </div>
-      </div>
-    `;
-
-    html2pdf().set(opt).from(pdfContent).save();
+    // Use the shared buildPdfElement so download and share produce identical PDF
+    const element = buildPdfElement();
+    html2pdf().set(opt).from(element).save();
   } catch (error) {
     console.error('Error saving PDF:', error);
   }
