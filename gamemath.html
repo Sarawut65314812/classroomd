@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/gamemath.css">
+<link rel="stylesheet" href="/css/gamemath.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf-thai-support@1.0.0/dist/jspdf-thai-support.min.js"></script>
@@ -516,7 +516,7 @@ async function shareResult(config) {
     const pdfContent = `
       <div style="font-family: 'THSarabunNew', sans-serif; color: #333;">
         <div style="text-align: center; margin-bottom: 12px;">
-          <img src='picture/Huaroa.jpg' alt='Logo' style='height: 70px; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;' />
+          <img src='/picture/Huaroa.jpg' alt='Logo' style='height: 70px; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;' />
         </div>
         <div style="text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
           <h1 style="margin: 5px 0; font-size: 24px;">รายงานผลการประเมิน</h1>
@@ -585,7 +585,7 @@ function saveResult() {
     pdfContent.innerHTML = `
       <div style="font-family: 'Arial', sans-serif; color: #333;">
         <div style="text-align: center; margin-bottom: 12px;">
-          <img src='picture/Huaroa.jpg' alt='Logo' style='height: 220px; width: auto; max-width: 100%; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;' />
+          <img src='/picture/Huaroa.jpg' alt='Logo' style='height: 220px; width: auto; max-width: 100%; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;' />
         </div>
         <div style="text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
           <h1 style="margin: 5px 0; font-size: 24px;">รายงานผลการประเมิน</h1>
@@ -736,7 +736,7 @@ function exportToPDF() {
     const pdfContent = `
       <div style="font-family: 'Arial', sans-serif; color: #333;">
         <div style="text-align: center; margin-bottom: 12px;">
-          <img src='picture/Huaroa.jpg' alt='Logo' style='height: 120px; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;' />
+          <img src='/picture/Huaroa.jpg' alt='Logo' style='height: 120px; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;' />
         </div>
         <div style="text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
           <h1 style="margin: 5px 0; font-size: 24px;">รายงานผลการประเมินกิจกรรมตัวเลข</h1>
