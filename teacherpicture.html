@@ -224,45 +224,24 @@ function saveConfig() {
   const unit = document.getElementById('unitInput')?.value.trim();
   const teacher = document.getElementById('teacherInput')?.value.trim();
   const mainTopic = document.getElementById('mainTopicInput')?.value.trim();
+  // Allow saving even when some fields are empty — use sensible defaults
+  const cfgWeek = week || '-';
+  const cfgTopic = topic || 'ไม่ระบุ';
+  const cfgUnit = unit || '-';
+  const cfgTeacher = teacher || 'ไม่ระบุ';
+  const cfgMainTopic = mainTopic || 'ไม่ระบุ';
+  if (correctImages.length === 0) console.warn('[SAVE CONFIG] saving with 0 correctImages');
+  if (wrongImages.length === 0) console.warn('[SAVE CONFIG] saving with 0 wrongImages');
 
-  if (!week) {
-    alert("กรุณากรอกสัปดาห์ที่");
-    return;
-  }
-  if (!topic) {
-    alert("กรุณากรอกสาระการเรียนรู้");
-    return;
-  }
-  if (!unit) {
-    alert("กรุณากรอกหน่วยการเรียนรู้");
-    return;
-  }
-  if (!teacher) {
-    alert("กรุณากรอกชื่อครูผู้รับผิดชอบ");
-    return;
-  }
-  if (!mainTopic) {
-    alert("กรุณากรอกหัวข้อกิจกรรม/หมวดหมู่");
-    return;
-  }
-  if (correctImages.length === 0) {
-    alert("กรุณาเพิ่มรูปที่ถูกต้องอย่างน้อย 1 รูป");
-    return;
-  }
-  if (wrongImages.length === 0) {
-    alert("กรุณาเพิ่มรูปที่ผิดอย่างน้อย 1 รูป");
-    return;
-  }
-
-  // Save config
+  // Save config (accept empty image lists)
   const config = {
-    week: week,
-    topic: topic,
-    unit: unit,
-    teacher: teacher,
-    mainTopic: mainTopic,
-    correctImages: correctImages,
-    wrongImages: wrongImages
+    week: cfgWeek,
+    topic: cfgTopic,
+    unit: cfgUnit,
+    teacher: cfgTeacher,
+    mainTopic: cfgMainTopic,
+    correctImages: correctImages || [],
+    wrongImages: wrongImages || []
   };
   localStorage.setItem('emojiGameConfig', JSON.stringify(config));
 
@@ -277,13 +256,14 @@ function saveActivity() {
   const teacher = document.getElementById('teacherInput')?.value.trim();
   const mainTopic = document.getElementById('mainTopicInput')?.value.trim();
 
-  if(!week){ alert("กรุณากรอกสัปดาห์ที่"); return; }
-  if(!topic){ alert("กรุณากรอกสาระการเรียนรู้"); return; }
-  if(!unit){ alert("กรุณากรอกหน่วยการเรียนรู้"); return; }
-  if(!teacher){ alert("กรุณากรอกชื่อครูผู้รับผิดชอบ"); return; }
-  if(!mainTopic){ alert("กรุณากรอกหัวข้อกิจกรรม/หมวดหมู่"); return; }
-  if(correctImages.length === 0){ alert("กรุณาเพิ่มรูปที่ถูกต้องอย่างน้อย 1 รูป"); return; }
-  if(wrongImages.length === 0){ alert("กรุณาเพิ่มรูปที่ผิดอย่างน้อย 1 รูป"); return; }
+  // Allow partial data — apply defaults where missing
+  const cfgWeek = week || '-';
+  const cfgTopic = topic || 'ไม่ระบุ';
+  const cfgUnit = unit || '-';
+  const cfgTeacher = teacher || 'ไม่ระบุ';
+  const cfgMainTopic = mainTopic || 'ไม่ระบุ';
+  if (correctImages.length === 0) console.warn('[SAVE ACTIVITY] saving activity with 0 correctImages');
+  if (wrongImages.length === 0) console.warn('[SAVE ACTIVITY] saving activity with 0 wrongImages');
 
   let savedActivities = JSON.parse(localStorage.getItem('savedActivities') || '[]');
   
@@ -318,7 +298,7 @@ function saveActivity() {
   }
   
   // บันทึกกิจกรรมใหม่
-  const activityName = prompt('ตั้งชื่อกิจกรรม:', `${mainTopic} - สัปดาห์ ${week}`);
+  const activityName = prompt('ตั้งชื่อกิจกรรม:', `${cfgMainTopic} - สัปดาห์ ${cfgWeek}`);
   
   if (!activityName) return;
   
@@ -326,16 +306,16 @@ function saveActivity() {
     id: Date.now(),
     name: activityName,
     type: 'picture',
-    topic: topic,
-    mainTopic: mainTopic,
+    topic: cfgTopic,
+    mainTopic: cfgMainTopic,
     config: {
-      week: week,
-      topic: topic,
-      unit: unit,
-      teacher: teacher,
-      mainTopic: mainTopic,
-      correctImages: correctImages,
-      wrongImages: wrongImages
+      week: cfgWeek,
+      topic: cfgTopic,
+      unit: cfgUnit,
+      teacher: cfgTeacher,
+      mainTopic: cfgMainTopic,
+      correctImages: correctImages || [],
+      wrongImages: wrongImages || []
     },
     savedAt: new Date().toISOString(),
     savedAtDisplay: new Date().toLocaleString('th-TH')

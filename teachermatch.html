@@ -645,20 +645,20 @@ function saveConfig(){
   const topic = document.getElementById('topicInput').value.trim();
   const unit = document.getElementById('unitInput').value.trim();
   const teacher = document.getElementById('teacherInput').value.trim();
+  // Allow saving even with missing fields — use defaults
+  const cfgWeek = week || '-';
+  const cfgTopic = topic || 'ไม่ระบุ';
+  const cfgUnit = unit || '-';
+  const cfgTeacher = teacher || 'ไม่ระบุ';
+  if (allQuestions.length === 0) console.warn('[SAVE] Saving config with 0 questions');
 
-  if(!week){ alert("กรุณากรอกสัปดาห์ที่"); return; }
-  if(!topic){ alert("กรุณากรอกสาระการเรียนรู้"); return; }
-  if(!unit){ alert("กรุณากรอกหน่วยการเรียนรู้"); return; }
-  if(!teacher){ alert("กรุณากรอกชื่อผู้รับผิดชอบ"); return; }
-  if(allQuestions.length === 0){ alert("กรุณาเพิ่มโจทย์อย่างน้อย 1 ข้อ"); return; }
-
-  // บันทึก config พร้อมโจทย์ทั้งหมด
+  // บันทึก config พร้อมโจทย์ทั้งหมด (accept empty questions)
   const config = {
-    week: week,
-    topic: topic,
-    unit: unit,
-    teacher: teacher,
-    questions: allQuestions  // เก็บเป็น array ของโจทย์
+    week: cfgWeek,
+    topic: cfgTopic,
+    unit: cfgUnit,
+    teacher: cfgTeacher,
+    questions: allQuestions || []  // เก็บเป็น array ของโจทย์
   };
   localStorage.setItem('emojiGameConfig', JSON.stringify(config));
 
@@ -672,13 +672,12 @@ function saveActivity() {
   const topic = document.getElementById('topicInput').value.trim();
   const unit = document.getElementById('unitInput').value.trim();
   const teacher = document.getElementById('teacherInput').value.trim();
-
-  if(!week){ alert("กรุณากรอกสัปดาห์ที่"); return; }
-  if(!topic){ alert("กรุณากรอกสาระการเรียนรู้"); return; }
-  if(!unit){ alert("กรุณากรอกหน่วยการเรียนรู้"); return; }
-  if(!teacher){ alert("กรุณากรอกชื่อผู้รับผิดชอบ"); return; }
-  if(allQuestions.length === 0){ alert("กรุณาเพิ่มโจทย์อย่างน้อย 1 ข้อ"); return; }
-
+  // Allow partial data — apply defaults where missing
+  const cfgWeek = week || '-';
+  const cfgTopic = topic || 'ไม่ระบุ';
+  const cfgUnit = unit || '-';
+  const cfgTeacher = teacher || 'ไม่ระบุ';
+  if (allQuestions.length === 0) console.warn('[SAVE ACTIVITY] saving activity with 0 questions');
   let savedActivities = JSON.parse(localStorage.getItem('savedActivities') || '[]');
   
   // ตรวจสอบว่ากำลังแก้ไขกิจกรรมเดิมหรือไม่
@@ -688,13 +687,13 @@ function saveActivity() {
     if (activity) {
       // อัพเดตข้อมูลกิจกรรมเดิม
       activity.config = {
-        week: week,
-        topic: topic,
-        unit: unit,
-        teacher: teacher,
-        questions: allQuestions
+        week: cfgWeek,
+        topic: cfgTopic,
+        unit: cfgUnit,
+        teacher: cfgTeacher,
+        questions: allQuestions || []
       };
-      activity.topic = topic;
+      activity.topic = cfgTopic;
       activity.savedAtDisplay = new Date().toLocaleString('th-TH');
       
       localStorage.setItem('savedActivities', JSON.stringify(savedActivities));
@@ -709,7 +708,7 @@ function saveActivity() {
   }
   
   // บันทึกกิจกรรมใหม่
-  const activityName = prompt('ตั้งชื่อกิจกรรม:', `${topic} - สัปดาห์ ${week}`);
+  const activityName = prompt('ตั้งชื่อกิจกรรม:', `${cfgTopic} - สัปดาห์ ${cfgWeek}`);
   
   if (!activityName) return;
   
@@ -717,13 +716,13 @@ function saveActivity() {
     id: Date.now(),
     name: activityName,
     type: 'math',
-    topic: topic,
+    topic: cfgTopic,
     config: {
-      week: week,
-      topic: topic,
-      unit: unit,
-      teacher: teacher,
-      questions: allQuestions
+      week: cfgWeek,
+      topic: cfgTopic,
+      unit: cfgUnit,
+      teacher: cfgTeacher,
+      questions: allQuestions || []
     },
     savedAt: new Date().toISOString(),
     savedAtDisplay: new Date().toLocaleString('th-TH')

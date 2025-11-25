@@ -202,23 +202,19 @@ function startActivity() {
   const topic = document.getElementById('topicInput').value.trim();
   const unit = document.getElementById('unitInput').value.trim();
   const teacher = document.getElementById('teacherInput').value.trim();
-
-  if (!week || !topic || !unit || !teacher) {
-    alert('กรุณากรอกข้อมูลกิจกรรมให้ครบ');
-    return;
-  }
-
-  if (allQuestions.length === 0) {
-    alert('กรุณาเพิ่มคำถามอย่างน้อย 1 ข้อ');
-    return;
-  }
+  // Allow starting even if some fields are empty — use defaults
+  const cfgWeek = week || '-';
+  const cfgTopic = topic || 'ไม่ระบุ';
+  const cfgUnit = unit || '-';
+  const cfgTeacher = teacher || 'ไม่ระบุ';
+  if (allQuestions.length === 0) console.warn('[START] Starting activity with 0 questions');
 
   const config = {
-    week: week,
-    topic: topic,
-    unit: unit,
-    teacher: teacher,
-    questions: allQuestions
+    week: cfgWeek,
+    topic: cfgTopic,
+    unit: cfgUnit,
+    teacher: cfgTeacher,
+    questions: allQuestions || []
   };
 
   localStorage.setItem('thaiGameConfig', JSON.stringify(config));
@@ -230,16 +226,12 @@ function saveActivity() {
   const topic = document.getElementById('topicInput').value.trim();
   const unit = document.getElementById('unitInput').value.trim();
   const teacher = document.getElementById('teacherInput').value.trim();
-
-  if (!week || !topic || !unit || !teacher) {
-    alert('กรุณากรอกข้อมูลกิจกรรมให้ครบ');
-    return;
-  }
-
-  if (allQuestions.length === 0) {
-    alert('กรุณาเพิ่มคำถามอย่างน้อย 1 ข้อ');
-    return;
-  }
+  // Allow saving partial activity — use defaults where missing
+  const cfgWeek = week || '-';
+  const cfgTopic = topic || 'ไม่ระบุ';
+  const cfgUnit = unit || '-';
+  const cfgTeacher = teacher || 'ไม่ระบุ';
+  if (allQuestions.length === 0) console.warn('[SAVE] saving activity with 0 questions');
 
   let savedActivities = JSON.parse(localStorage.getItem('savedActivities') || '[]');
   
@@ -268,7 +260,7 @@ function saveActivity() {
     }
   }
 
-  const activityName = prompt('ตั้งชื่อกิจกรรม:', `${topic} - สัปดาห์ ${week}`);
+  const activityName = prompt('ตั้งชื่อกิจกรรม:', `${cfgTopic} - สัปดาห์ ${cfgWeek}`);
   
   if (!activityName) return;
   
@@ -276,13 +268,13 @@ function saveActivity() {
     id: Date.now(),
     name: activityName,
     type: 'thai',
-    topic: topic,
+    topic: cfgTopic,
     config: {
-      week: week,
-      topic: topic,
-      unit: unit,
-      teacher: teacher,
-      questions: allQuestions
+      week: cfgWeek,
+      topic: cfgTopic,
+      unit: cfgUnit,
+      teacher: cfgTeacher,
+      questions: allQuestions || []
     },
     savedAt: new Date().toISOString(),
     savedAtDisplay: new Date().toLocaleString('th-TH')
