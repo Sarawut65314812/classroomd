@@ -684,9 +684,27 @@ async function shareScore() {
     const element = document.createElement('div');
     element.innerHTML = pdfContent;
 
+
     // create PDF blob
     const pdfBlob = await html2pdf().set(opt).from(element).output('blob')
 
+    // Try to share the PDF file directly via Web Share API (files)
+    try {
+      const file = new File([pdfBlob], opt.filename, { type: 'application/pdf' })
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], title: 'Smart Classroom - ผลการทดสอบ', text: `ผลการทดสอบ: ${score}/${allQuestions.length}` })
+          return
+        } catch (e) {
+          console.warn('navigator.share with files failed:', e)
+          // continue to fallback upload
+        }
+      }
+    } catch (e) {
+      console.warn('Direct file share not available or failed:', e)
+    }
+
+    // If direct file share isn't supported, fallback to upload+link flow
     // convert blob to dataURL
     const blobToDataURL = blob => new Promise((resolve, reject) => {
       const reader = new FileReader()
@@ -710,16 +728,6 @@ async function shareScore() {
 
     const publicUrl = uploadJson.url
     const shareText = `ผลการทดสอบ: ${score}/${allQuestions.length}`
-
-    // Try Web Share API (URL)
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: 'Smart Classroom - ผลการทดสอบ', text: shareText, url: publicUrl })
-        return
-      }
-    } catch (err) {
-      console.warn('navigator.share failed:', err)
-    }
 
     // Fallback: show a small share modal with platform links and copy/download
     const encodedUrl = encodeURIComponent(publicUrl)
