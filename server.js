@@ -1,3 +1,7 @@
+// Serve catagoly.html at /catagoly
+app.get("/catagoly", (req, res) => {
+  res.sendFile(path.join(__dirname, "catagoly.html"));
+});
 import express from "express"
 import path from "path"
 import { fileURLToPath } from "url"
