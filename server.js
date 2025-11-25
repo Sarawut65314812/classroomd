@@ -75,6 +75,7 @@ app.post('/api/usage/start', async (req, res) => {
         try { res.setHeader('Set-Cookie', `huaroa_client_id=${encodeURIComponent(clientId)}; Path=/; HttpOnly`); } catch(e){}
       }
     } catch(e) { /* ignore cookie parsing errors */ }
+    // Add timestamp field to MongoDB documents
     const doc = {
       client_id: clientId || null,
       page: page || null,
@@ -82,7 +83,8 @@ app.post('/api/usage/start', async (req, res) => {
       start_at: startAt,
       end_at: null,
       durationMs: null,
-      created_at: new Date().toISOString()
+      created_at: new Date(),
+      timestamp: new Date() // Use Date object
     }
     let usageId = 'local-' + Date.now()
     // Prefer per-page collection
@@ -124,7 +126,18 @@ app.post('/api/usage/end', async (req, res) => {
           const startMs = new Date(doc.start_at).getTime()
           const endMs = new Date(endAt).getTime()
           const durationMs = Math.max(0, endMs - startMs)
-          await pageColl.updateOne({ _id: doc._id }, { $set: { end_at: endAt, durationMs } })
+          // Add timestamp field to MongoDB documents in /api/usage/end
+          const updateDoc = {
+            client_id: clientId || null,
+            page: page || null,
+            section: section || null,
+            start_at: startAt,
+            end_at: endAt,
+            durationMs: durationMs,
+            created_at: new Date(),
+            timestamp: new Date() // Use Date object
+          }
+          await pageColl.updateOne({ _id: doc._id }, { $set: updateDoc })
           // Append end entry to per-page log
           appendUsageLog(page || doc.page || 'unknown', { type: 'end', usageId: doc._id.toString(), client_id: doc.client_id || clientId || null, start_at: doc.start_at, end_at: endAt, durationMs, created_at: new Date().toISOString() })
           return res.json({ success: true, usageId: doc._id.toString(), durationMs })
@@ -188,7 +201,17 @@ app.post('/api/usage/event', async (req, res) => {
   try {
     const { clientId, page, section, name, data, timestamp } = req.body || {}
     const ts = timestamp || new Date().toISOString()
-    const doc = { client_id: clientId || null, page: page || null, section: section || null, name: name || null, data: data || null, timestamp: ts, created_at: new Date().toISOString() }
+    // Add timestamp field to MongoDB documents in /api/usage/event
+    const doc = {
+      client_id: clientId || null,
+      page: page || null,
+      section: section || null,
+      name: name || null,
+      data: data || null,
+      timestamp: ts,
+      created_at: new Date(),
+      timestamp: new Date() // Use Date object
+    }
     const pageColl = getPageUsageColl(page)
     if (pageColl) await pageColl.insertOne(doc)
     else if (usageColl) await usageColl.insertOne(doc)
