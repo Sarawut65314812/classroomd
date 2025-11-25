@@ -19,8 +19,38 @@ app.get("/teacherpicture", (req, res) => res.sendFile(path.join(__dirname, "teac
 app.get("/teacherthai", (req, res) => res.sendFile(path.join(__dirname, "teacherthai.html")));
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-app.use(express.json())
+// Allow larger JSON bodies (for base64 uploads) and urlencoded bodies
+app.use(express.json({ limit: '50mb' }))
+app.use(express.urlencoded({ extended: true, limit: '50mb' }))
 app.use(express.static(__dirname))
+
+// Upload endpoint: accept base64 DataURL JSON and save to /uploads
+app.post('/uploadBase64', async (req, res) => {
+  try {
+    const { filename, dataUrl } = req.body || {}
+    if (!filename || !dataUrl) return res.status(400).json({ success: false, message: 'filename and dataUrl required' })
+
+    const uploadsDir = path.join(__dirname, 'uploads')
+    if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true })
+
+    const m = String(dataUrl).match(/^data:(.+);base64,(.+)$/)
+    if (!m) return res.status(400).json({ success: false, message: 'invalid dataUrl' })
+    const mime = m[1]
+    const b64 = m[2]
+    const buffer = Buffer.from(b64, 'base64')
+
+    const safeName = `${Date.now()}-${path.basename(filename)}`
+    const outPath = path.join(uploadsDir, safeName)
+    fs.writeFileSync(outPath, buffer)
+
+    const fileUrl = `${req.protocol}://${req.get('host')}/uploads/${safeName}`
+    console.log('[UPLOAD] saved', outPath, '->', fileUrl)
+    res.json({ success: true, url: fileUrl })
+  } catch (e) {
+    console.error('[UPLOAD] error', e)
+    res.status(500).json({ success: false, message: 'upload failed' })
+  }
+})
 
 // In-memory storage
 const feedbackList = []

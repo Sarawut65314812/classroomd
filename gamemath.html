@@ -644,7 +644,7 @@ async function shareScore() {
     const pdfContent = `
       <div style="font-family: 'Arial', sans-serif; color: #333;">
         <div style="text-align: center; margin-bottom: 12px;">
-          <img src='picture/Huaroa.jpg' alt='Logo' style='height: 220px; width: auto; max-width: 100%; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;' />
+          <img src='/picture/Huaroa.jpg' alt='Logo' style='height: 220px; width: auto; max-width: 100%; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;' />
         </div>
         <div style="text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
           <h1 style="margin: 5px 0; font-size: 24px;">รายงานผลการประเมิน</h1>
@@ -684,20 +684,98 @@ async function shareScore() {
     const element = document.createElement('div');
     element.innerHTML = pdfContent;
 
-    html2pdf().set(opt).from(element).output('blob').then(blob => {
-      const file = new File([blob], opt.filename, { type: 'application/pdf' });
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        navigator.share({
-          files: [file],
-          title: 'Smart Classroom - ผลการทดสอบ',
-          text: `ผลการทดสอบ: ${score}/${allQuestions.length}`
-        }).catch(err => console.log('Error sharing:', err));
-      } else {
-        html2pdf().set(opt).from(element).save();
+    // create PDF blob
+    const pdfBlob = await html2pdf().set(opt).from(element).output('blob')
+
+    // convert blob to dataURL
+    const blobToDataURL = blob => new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result)
+      reader.onerror = reject
+      reader.readAsDataURL(blob)
+    })
+    const dataUrl = await blobToDataURL(pdfBlob)
+
+    // upload to server
+    const uploadRes = await fetch('/uploadBase64', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filename: opt.filename, dataUrl })
+    })
+    const uploadJson = await uploadRes.json()
+    if (!uploadJson || !uploadJson.success) {
+      html2pdf().set(opt).from(element).save()
+      return alert('อัปโหลดไฟล์ล้มเหลว ระบบจะดาวน์โหลด PDF ให้แทน')
+    }
+
+    const publicUrl = uploadJson.url
+    const shareText = `ผลการทดสอบ: ${score}/${allQuestions.length}`
+
+    // Try Web Share API (URL)
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: 'Smart Classroom - ผลการทดสอบ', text: shareText, url: publicUrl })
+        return
       }
-    });
+    } catch (err) {
+      console.warn('navigator.share failed:', err)
+    }
+
+    // Fallback: show a small share modal with platform links and copy/download
+    const encodedUrl = encodeURIComponent(publicUrl)
+    const encodedText = encodeURIComponent(shareText)
+    const platforms = [
+      { id: 'line', label: 'LINE', url: `https://social-plugins.line.me/lineit/share?url=${encodedUrl}` },
+      { id: 'whatsapp', label: 'WhatsApp', url: `https://api.whatsapp.com/send?text=${encodedText}%20${encodedUrl}` },
+      { id: 'facebook', label: 'Facebook', url: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}` },
+      { id: 'telegram', label: 'Telegram', url: `https://t.me/share/url?url=${encodedUrl}&text=${encodedText}` }
+    ]
+
+    // build modal
+    let modal = document.getElementById('shareModal')
+    if (modal) modal.remove()
+    modal = document.createElement('div')
+    modal.id = 'shareModal'
+    modal.style = 'position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:20000;'
+    const box = document.createElement('div')
+    box.style = 'background:#fff;padding:18px;border-radius:12px;min-width:260px;max-width:90%;text-align:center;'
+    const title = document.createElement('div')
+    title.innerText = 'เลือกแอปแชร์หรือคัดลอกลิงก์'
+    title.style = 'font-weight:700;margin-bottom:12px;'
+    box.appendChild(title)
+
+    platforms.forEach(p => {
+      const b = document.createElement('button')
+      b.innerText = p.label
+      b.style = 'display:block;width:100%;margin:6px 0;padding:10px;border-radius:8px;background:#f0f0f0;border:none;cursor:pointer;font-weight:700'
+      b.onclick = () => { window.open(p.url, '_blank'); }
+      box.appendChild(b)
+    })
+
+    const copyBtn = document.createElement('button')
+    copyBtn.innerText = 'คัดลอกลิงก์'
+    copyBtn.style = 'display:block;width:100%;margin:6px 0;padding:10px;border-radius:8px;background:#e0f7fa;border:none;cursor:pointer;font-weight:700'
+    copyBtn.onclick = async () => { try { await navigator.clipboard.writeText(publicUrl); alert('คัดลอกลิงก์แล้ว'); } catch (e) { alert('คัดลอกไม่สำเร็จ'); } }
+    box.appendChild(copyBtn)
+
+    const downloadBtn = document.createElement('button')
+    downloadBtn.innerText = 'ดาวน์โหลด PDF'
+    downloadBtn.style = 'display:block;width:100%;margin:6px 0;padding:10px;border-radius:8px;background:#fff3e0;border:none;cursor:pointer;font-weight:700'
+    downloadBtn.onclick = () => { html2pdf().set(opt).from(element).save() }
+    box.appendChild(downloadBtn)
+
+    const closeBtn = document.createElement('button')
+    closeBtn.innerText = 'ปิด'
+    closeBtn.style = 'margin-top:10px;padding:8px 12px;border-radius:8px;'
+    closeBtn.onclick = () => modal.remove()
+    box.appendChild(closeBtn)
+
+    modal.appendChild(box)
+    document.body.appendChild(modal)
+
   } catch (error) {
     console.error('Error sharing PDF:', error);
+    alert('เกิดข้อผิดพลาดในการแชร์ไฟล์')
   }
 }
 
