@@ -8,20 +8,52 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/gamepicture.css">
+<style>
+  /* Override zone styling: larger touch targets and colored dashed borders */
+  #zones { display:flex; gap:16px; justify-content:center; align-items:center; }
+  #zones .zone {
+    width: 40%;
+    height: 400px;
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 72px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+    background: transparent; /* remove white background */
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+    position: relative;
+  }
+  #zones .zone:active { transform: scale(0.98); }
+  .zone-label {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 18px;
+    font-weight: 700;
+    color: inherit;
+  }
+  /* Correct / Wrong zone styling (static glow, no animation) */
+  #correctZone { border: 4px dashed #27ae60; color: #27ae60; box-shadow: 0 10px 30px rgba(14, 226, 17, 0.1); }
+  #wrongZone { border: 4px dashed #e74c3c; color: #e74c3c; box-shadow: 0 10px 30px rgba(231,76,60,0.10); }
+  /* center page title */
+  .page-title { text-align: center; margin-top: 26px; margin-bottom: 14px; }
+</style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
 
-<h2>สาระการเรียนรู้: <span id="topicName"></span></h2>
+<h2 class="page-title">สาระการเรียนรู้: <span id="topicName"></span></h2>
+<p id="scoreDisplay" style="display:none; font-size:26px; font-weight:700; color:#333; margin:18px 0 6px 0;">Score: <span id="score" style="font-size:34px; color:#27ae60;">0</span></p>
 
 
 
 <div id="zones" style="display:none;">
-  <div id="correctZone" class="zone">ถูกต้อง ✅</div>
-  <div id="wrongZone" class="zone">ผิด ❌</div>
+  <div id="correctZone" class="zone"><div class="zone-label"></div>✔️</div>
+  <div id="wrongZone" class="zone"><div class="zone-label"></div>❌</div>
 </div>
-<p id="scoreDisplay" style="display:none;">Score: <span id="score">0</span></p>
 
 <!-- Popup -->
 <div id="scorePopup">
@@ -296,13 +328,25 @@ function createDraggableImage(imgData, imageId, isCorrect) {
   imageDiv.classList.add('image-item');
   imageDiv.innerHTML = `<img src="${imgData}" alt="Image">`;
 
-  const startX = 50 + Math.random() * (window.innerWidth - 200);
-  const startY = 50 + Math.random() * (window.innerHeight - 350);
-  const angle = Math.floor(Math.random() * 360);
-  const scale = 0.8 + Math.random() * 0.6;
+  // Place random images near the bottom of the screen so they don't spawn inside the zones
+  const estimatedImgW = 100;
+  const estimatedImgH = 100;
+  const horizontalPadding = 24;
+  const minX = horizontalPadding;
+  const maxX = Math.max(minX, window.innerWidth - estimatedImgW - horizontalPadding);
+  const startX = minX + Math.random() * (maxX - minX);
+
+  // Bottom area: keep images within a band near the bottom (not overlapping the zones)
+  const bottomBandHeight = 220; // px high area from the bottom where images will appear
+  const minY = Math.max(50, window.innerHeight - bottomBandHeight);
+  const maxY = Math.max(minY + 10, window.innerHeight - estimatedImgH - 12);
+  const startY = minY + Math.random() * (maxY - minY);
+  // Disable random rotation: keep images upright but allow slight scale variation
+  const angle = 0;
+  const scale = 0.9 + Math.random() * 0.2;
   imageDiv.style.left = `${startX}px`;
   imageDiv.style.top = `${startY}px`;
-  imageDiv.style.transform = `rotate(${angle}deg) scale(${scale})`;
+  imageDiv.style.transform = `scale(${scale})`;
 
   let offsetX, offsetY;
   function dragMove(posX, posY) {
