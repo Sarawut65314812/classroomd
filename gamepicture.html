@@ -13,7 +13,7 @@
   #zones { display:flex; gap:16px; justify-content:center; align-items:center; }
   #zones .zone {
     width: 40%;
-    height: 400px;
+    height: 300px; /* Reduced from 400px */
     border-radius: 18px;
     display: flex;
     align-items: center;
@@ -39,6 +39,13 @@
   #wrongZone { border: 4px dashed #e74c3c; color: #e74c3c; box-shadow: 0 10px 30px rgba(231,76,60,0.10); }
   /* center page title */
   .page-title { text-align: center; margin-top: 26px; margin-bottom: 14px; }
+
+  /* Adjust image size for larger display */
+  #zones .zone img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>

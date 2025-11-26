@@ -75,34 +75,33 @@ app.post('/api/usage/start', async (req, res) => {
         try { res.setHeader('Set-Cookie', `huaroa_client_id=${encodeURIComponent(clientId)}; Path=/; HttpOnly`); } catch(e){}
       }
     } catch(e) { /* ignore cookie parsing errors */ }
-    // Add timestamp field to MongoDB documents
-    const doc = {
+    // Buffer the usage in memory and return a usageId. We'll flush to DB on end.
+    let usageId = 'local-' + Date.now() + '-' + Math.random().toString(36).slice(2)
+    const bufferKey = makeUsageKey(usageId, clientId, page)
+    bufferedUsages.set(bufferKey, {
+      usageId,
       client_id: clientId || null,
       page: page || null,
       section: section || null,
       start_at: startAt,
       end_at: null,
       durationMs: null,
-      created_at: new Date(),
-      timestamp: new Date() // Use Date object
-    }
-    let usageId = 'local-' + Date.now()
-    // Prefer per-page collection
-    const pageColl = getPageUsageColl(page)
-    if (pageColl) {
-      const r = await pageColl.insertOne(doc)
-      usageId = r.insertedId.toString()
-    } else if (usageColl) {
-      const r = await usageColl.insertOne(doc)
-      usageId = r.insertedId.toString()
-    }
-    // Append to per-page file log as well
-    appendUsageLog(page || 'unknown', Object.assign({ type: 'start', usageId }, doc))
+      events: [],
+      lastActivityAt: Date.now()
+    })
+    // Append a lightweight start line to per-page file log (optional), marked as buffered
+    appendUsageLog(page || 'unknown', { type: 'start_buffered', usageId, client_id: clientId || null, page: page || null, start_at: startAt, created_at: new Date().toISOString() })
     // Record unique daily page user (if clientId provided)
     try {
       if (clientId && page) await recordDailyPageUser(clientId, page)
     } catch (err) {
       console.warn('[WARN] recordDailyPageUser call failed', err && err.message)
+    }
+    // Record page view (increment total visits for this page/day)
+    try {
+      if (page) await recordDailyPageView(page)
+    } catch (err) {
+      console.warn('[WARN] recordDailyPageView call failed', err && err.message)
     }
     return res.json({ success: true, usageId, doc })
   } catch (e) {
@@ -115,82 +114,87 @@ app.post('/api/usage/end', async (req, res) => {
   try {
     const { usageId, clientId, page, section, timestamp } = req.body || {}
     const endAt = timestamp || new Date().toISOString()
-    // Try to close by usageId in provided page collection first
-    const pageColl = getPageUsageColl(page)
-    if (usageId && pageColl) {
-      try {
-        const { ObjectId } = require('mongodb')
-        const oId = new ObjectId(usageId)
-        const doc = await pageColl.findOne({ _id: oId })
-        if (doc) {
-          const startMs = new Date(doc.start_at).getTime()
-          const endMs = new Date(endAt).getTime()
-          const durationMs = Math.max(0, endMs - startMs)
-          // Add timestamp field to MongoDB documents in /api/usage/end
-          const updateDoc = {
-            client_id: clientId || null,
-            page: page || null,
-            section: section || null,
-            start_at: startAt,
-            end_at: endAt,
-            durationMs: durationMs,
-            created_at: new Date(),
-            timestamp: new Date() // Use Date object
+    // Prefer flushing buffered usage if available
+    try {
+      // try find buffer by usageId
+      let bufKey = null
+      if (usageId) {
+        if (bufferedUsages.has(String(usageId))) bufKey = String(usageId)
+        else {
+          // also check keys that start with usageId (our key format may include timestamp suffix)
+          for (const k of bufferedUsages.keys()) {
+            if (k.indexOf(String(usageId)) === 0) { bufKey = k; break }
           }
-          await pageColl.updateOne({ _id: doc._id }, { $set: updateDoc })
-          // Append end entry to per-page log
-          appendUsageLog(page || doc.page || 'unknown', { type: 'end', usageId: doc._id.toString(), client_id: doc.client_id || clientId || null, start_at: doc.start_at, end_at: endAt, durationMs, created_at: new Date().toISOString() })
-          return res.json({ success: true, usageId: doc._id.toString(), durationMs })
         }
-      } catch (inner) {
-        console.error('[WARN] /api/usage/end parsing usageId in pageColl', inner && inner.message)
       }
-    }
-
-    // Fallback: try provided page's open usage by clientId
-    if (pageColl && clientId && page) {
-      const doc = await pageColl.findOne({ client_id: clientId, page, section: section || null, end_at: null }, { sort: { start_at: -1 } })
-      if (doc) {
-        const startMs = new Date(doc.start_at).getTime()
+      // otherwise try by clientId+page
+      if (!bufKey && clientId && page) {
+        for (const [k, buf] of bufferedUsages.entries()) {
+          if (buf.client_id === clientId && buf.page === page && !buf.end_at) { bufKey = k; break }
+        }
+      }
+      if (bufKey) {
+        const buf = bufferedUsages.get(bufKey)
+        const startMs = new Date(buf.start_at).getTime()
         const endMs = new Date(endAt).getTime()
         const durationMs = Math.max(0, endMs - startMs)
-        await pageColl.updateOne({ _id: doc._id }, { $set: { end_at: endAt, durationMs } })
-        appendUsageLog(page || doc.page || 'unknown', { type: 'end', usageId: doc._id.toString(), client_id: clientId, start_at: doc.start_at, end_at: endAt, durationMs, created_at: new Date().toISOString() })
-        return res.json({ success: true, usageId: doc._id.toString(), durationMs })
+        buf.end_at = endAt
+        buf.durationMs = durationMs
+        buf.lastActivityAt = Date.now()
+        const insertedId = await flushBufferedUsage(bufKey, 'end')
+        return res.json({ success: true, usageId: insertedId || buf.usageId, durationMs })
       }
-    }
 
-    // Final fallback: legacy global usageColl search
-    if (usageColl) {
-      if (usageId) {
-        try {
-          const { ObjectId } = require('mongodb')
-          const oId = new ObjectId(usageId)
-          const doc = await usageColl.findOne({ _id: oId })
+      // Fallback to legacy behavior: try to update DB records if they exist
+      const pageColl = getPageUsageColl(page)
+      if (pageColl) {
+        // try find an open doc by clientId
+        if (clientId && page) {
+          const doc = await pageColl.findOne({ client_id: clientId, page, section: section || null, end_at: null }, { sort: { start_at: -1 } })
+          if (doc) {
+            const startMs = new Date(doc.start_at).getTime()
+            const endMs = new Date(endAt).getTime()
+            const durationMs = Math.max(0, endMs - startMs)
+            await pageColl.updateOne({ _id: doc._id }, { $set: { end_at: endAt, durationMs } })
+            appendUsageLog(page || doc.page || 'unknown', { type: 'end', usageId: doc._id.toString(), client_id: clientId, start_at: doc.start_at, end_at: endAt, durationMs, created_at: new Date().toISOString() })
+            return res.json({ success: true, usageId: doc._id.toString(), durationMs })
+          }
+        }
+      }
+      if (usageColl) {
+        if (usageId) {
+          try {
+            const { ObjectId } = require('mongodb')
+            const oId = new ObjectId(usageId)
+            const doc = await usageColl.findOne({ _id: oId })
+            if (doc) {
+              const startMs = new Date(doc.start_at).getTime()
+              const endMs = new Date(endAt).getTime()
+              const durationMs = Math.max(0, endMs - startMs)
+              await usageColl.updateOne({ _id: doc._id }, { $set: { end_at: endAt, durationMs } })
+              appendUsageLog(doc.page || page || 'unknown', { type: 'end', usageId: doc._id.toString(), client_id: doc.client_id || clientId || null, start_at: doc.start_at, end_at: endAt, durationMs, created_at: new Date().toISOString() })
+              return res.json({ success: true, usageId: doc._id.toString(), durationMs })
+            }
+          } catch (inner) { console.error('[WARN] fallback usageColl parsing usageId', inner && inner.message) }
+        }
+        if (clientId && page) {
+          const doc = await usageColl.findOne({ client_id: clientId, page, section: section || null, end_at: null }, { sort: { start_at: -1 } })
           if (doc) {
             const startMs = new Date(doc.start_at).getTime()
             const endMs = new Date(endAt).getTime()
             const durationMs = Math.max(0, endMs - startMs)
             await usageColl.updateOne({ _id: doc._id }, { $set: { end_at: endAt, durationMs } })
-            appendUsageLog(doc.page || page || 'unknown', { type: 'end', usageId: doc._id.toString(), client_id: doc.client_id || clientId || null, start_at: doc.start_at, end_at: endAt, durationMs, created_at: new Date().toISOString() })
+            appendUsageLog(page || doc.page || 'unknown', { type: 'end', usageId: doc._id.toString(), client_id: clientId, start_at: doc.start_at, end_at: endAt, durationMs, created_at: new Date().toISOString() })
             return res.json({ success: true, usageId: doc._id.toString(), durationMs })
           }
-        } catch (inner) { console.error('[WARN] fallback usageColl parsing usageId', inner && inner.message) }
-      }
-      if (clientId && page) {
-        const doc = await usageColl.findOne({ client_id: clientId, page, section: section || null, end_at: null }, { sort: { start_at: -1 } })
-        if (doc) {
-          const startMs = new Date(doc.start_at).getTime()
-          const endMs = new Date(endAt).getTime()
-          const durationMs = Math.max(0, endMs - startMs)
-          await usageColl.updateOne({ _id: doc._id }, { $set: { end_at: endAt, durationMs } })
-          appendUsageLog(page || doc.page || 'unknown', { type: 'end', usageId: doc._id.toString(), client_id: clientId, start_at: doc.start_at, end_at: endAt, durationMs, created_at: new Date().toISOString() })
-          return res.json({ success: true, usageId: doc._id.toString(), durationMs })
         }
       }
-    }
 
-    return res.json({ success: true, message: 'no open usage found' })
+      return res.json({ success: true, message: 'no open usage found' })
+    } catch (innerErr) {
+      console.error('[ERROR] /api/usage/end internal', innerErr && innerErr.message)
+      return res.status(500).json({ success: false, message: 'internal error' })
+    }
   } catch (e) {
     console.error('[ERROR] /api/usage/end', e)
     res.status(500).json({ success: false, message: 'failed to end usage' })
@@ -201,23 +205,28 @@ app.post('/api/usage/event', async (req, res) => {
   try {
     const { clientId, page, section, name, data, timestamp } = req.body || {}
     const ts = timestamp || new Date().toISOString()
-    // Add timestamp field to MongoDB documents in /api/usage/event
-    const doc = {
-      client_id: clientId || null,
-      page: page || null,
-      section: section || null,
-      name: name || null,
-      data: data || null,
-      timestamp: ts,
-      created_at: new Date(),
-      timestamp: new Date() // Use Date object
+    const eventDoc = { name: name || null, data: data || null, timestamp: ts }
+    // Try to find buffered usage by usageId / clientId+page
+    // Preference: if client has a buffered usage, append event there
+    let appended = false
+    // attempt to find by clientId+page
+    for (const [k, buf] of bufferedUsages.entries()) {
+      if ((buf.client_id && clientId && buf.client_id === clientId) && (buf.page === page)) {
+        buf.events.push(eventDoc)
+        buf.lastActivityAt = Date.now()
+        appended = true
+        break
+      }
     }
-    const pageColl = getPageUsageColl(page)
-    if (pageColl) await pageColl.insertOne(doc)
-    else if (usageColl) await usageColl.insertOne(doc)
-    // also append to per-page log
-    appendUsageLog(page || 'unknown', Object.assign({ type: 'event' }, doc))
-    return res.json({ success: true })
+    // fallback: if not buffered, write to DB as before
+    if (!appended) {
+      const doc = { client_id: clientId || null, page: page || null, section: section || null, name: name || null, data: data || null, timestamp: ts, created_at: new Date().toISOString() }
+      const pageColl = getPageUsageColl(page)
+      if (pageColl) await pageColl.insertOne(doc)
+      else if (usageColl) await usageColl.insertOne(doc)
+      appendUsageLog(page || 'unknown', Object.assign({ type: 'event' }, doc))
+    }
+    return res.json({ success: true, buffered: appended })
   } catch (e) {
     console.error('[ERROR] /api/usage/event', e)
     res.status(500).json({ success: false, message: 'failed to record usage event' })
@@ -258,6 +267,7 @@ let usageColl
 let mdb
 let dailyPageUsersColl
 let dailyPageCountsColl
+let dailyPageViewsColl
 const pageUsageColls = new Map()
 
 function safeCollectionNameForPage(page) {
@@ -298,6 +308,8 @@ try {
   // daily page users: track unique client_id per page per day
   dailyPageUsersColl = mdb.collection('daily_page_users')
   dailyPageCountsColl = mdb.collection('daily_page_counts')
+  // daily page views: total visits per page per day
+  dailyPageViewsColl = mdb.collection('daily_page_views')
   feedbacksColl = mdb.collection('feedbacks')
   await sessionsColl.createIndex({ client_id: 1 })
   if (usageColl) {
@@ -311,6 +323,9 @@ try {
   }
   if (dailyPageCountsColl) {
     await dailyPageCountsColl.createIndex({ page: 1, day: 1 }, { unique: true })
+  }
+  if (dailyPageViewsColl) {
+    await dailyPageViewsColl.createIndex({ page: 1, day: 1 }, { unique: true })
   }
   // ensure unique index on client_id + day
   await dailyUsersColl.createIndex({ client_id: 1, day: 1 }, { unique: true })
@@ -358,18 +373,60 @@ async function recordDailyPageUser(clientId, page) {
       { $setOnInsert: { created_at: createdAt } },
       { upsert: true }
     )
+    // debug log to help diagnose why counts may not increment
+    try {
+      console.log(`[DEBUG] recordDailyPageUser: client=${clientId} page=${page} day=${day} upsertRes=`, upsertRes)
+    } catch (logErr) {
+      console.log('[DEBUG] recordDailyPageUser: could not stringify upsertRes', logErr && logErr.message)
+    }
+    // detect if this call actually inserted a new document (driver versions differ)
+    const inserted = Boolean(
+      (upsertRes.upsertedId && Object.keys(upsertRes.upsertedId).length > 0) ||
+      (upsertRes.upsertedCount && upsertRes.upsertedCount > 0) ||
+      (upsertRes.lastErrorObject && upsertRes.lastErrorObject.upserted)
+    )
     // if upserted (new unique user for this page/day), increment counter
-    const inserted = (upsertRes.upsertedCount && upsertRes.upsertedCount > 0)
     if (inserted) {
       await dailyPageCountsColl.updateOne(
         { page, day },
         { $inc: { count: 1 }, $setOnInsert: { created_at: createdAt } },
         { upsert: true }
       )
+      // emit realtime update for dashboards (new unique user for page/day)
+      try {
+        if (typeof io !== 'undefined' && io && dailyPageCountsColl) {
+          const doc = await dailyPageCountsColl.findOne({ page, day })
+          io.emit('daily:unique', { page, day, count: doc && doc.count ? doc.count : 0 })
+        }
+      } catch(e) { console.error('[WARN] emit daily:unique failed', e && e.message) }
+      console.log(`[DEBUG] recordDailyPageUser: incremented daily_page_counts for page=${page} day=${day}`)
       console.log(`[DEBUG] Recorded daily page user ${clientId} for ${page} on ${day}`)
     }
   } catch (e) {
     console.error('[WARN] recordDailyPageUser failed', e && e.message)
+  }
+}
+
+async function recordDailyPageView(page) {
+  if (!page) return
+  if (!dailyPageViewsColl) return
+  try {
+    const day = new Date().toISOString().slice(0, 10)
+    const createdAt = new Date().toISOString()
+    await dailyPageViewsColl.updateOne(
+      { page, day },
+      { $inc: { count: 1 }, $setOnInsert: { created_at: createdAt } },
+      { upsert: true }
+    )
+    // emit realtime update for dashboards (page view increment)
+    try {
+      if (typeof io !== 'undefined' && io && dailyPageViewsColl) {
+        const doc = await dailyPageViewsColl.findOne({ page, day })
+        io.emit('daily:views', { page, day, count: doc && doc.count ? doc.count : 0 })
+      }
+    } catch(e) { console.error('[WARN] emit daily:views failed', e && e.message) }
+  } catch (e) {
+    console.error('[WARN] recordDailyPageView failed', e && e.message)
   }
 }
 
@@ -390,11 +447,76 @@ function appendUsageLog(page, record) {
 // In-memory session starts: socket.id -> startTimestamp(ms)
 const sessionStarts = new Map()
 
+// Buffered usage events: usageId -> { usageId, client_id, page, section, start_at, events: [], lastActivityAt }
+const bufferedUsages = new Map()
+
+function makeUsageKey(usageId, clientId, page) {
+  if (usageId) return String(usageId)
+  return `${clientId || 'anon'}::${page || 'unknown'}::${Date.now()}`
+}
+
+async function flushBufferedUsage(bufferKey, reason) {
+  const buf = bufferedUsages.get(bufferKey)
+  if (!buf) return null
+  try {
+    const doc = {
+      client_id: buf.client_id || null,
+      page: buf.page || null,
+      section: buf.section || null,
+      start_at: buf.start_at || new Date().toISOString(),
+      end_at: buf.end_at || new Date().toISOString(),
+      durationMs: buf.durationMs || null,
+      events: buf.events || [],
+      created_at: new Date().toISOString(),
+      flush_reason: reason || 'end'
+    }
+    const pageColl = getPageUsageColl(buf.page)
+    let insertedId = null
+    if (pageColl) {
+      const r = await pageColl.insertOne(doc)
+      insertedId = r.insertedId && r.insertedId.toString()
+    } else if (usageColl) {
+      const r = await usageColl.insertOne(doc)
+      insertedId = r.insertedId && r.insertedId.toString()
+    }
+    // emit realtime event for dashboards
+    try {
+      if (typeof io !== 'undefined' && io && buf) {
+        io.emit('usage:flushed', { page: buf.page || 'unknown', client_id: buf.client_id || null, start_at: buf.start_at, end_at: buf.end_at, durationMs: buf.durationMs, usageId: insertedId || buf.usageId, eventsCount: (buf.events||[]).length, created_at: doc.created_at })
+      }
+    } catch(e) { console.error('[WARN] emit usage:flushed failed', e && e.message) }
+    // append single summary to per-page NDJSON
+    appendUsageLog(buf.page || 'unknown', Object.assign({ type: 'flush', usageId: insertedId || buf.usageId }, doc))
+    bufferedUsages.delete(bufferKey)
+    console.log(`[DEBUG] flushBufferedUsage: flushed buffer ${bufferKey} -> id=${insertedId} reason=${reason}`)
+    return insertedId
+  } catch (e) {
+    console.error('[ERROR] flushBufferedUsage failed', e && e.message)
+    return null
+  }
+}
+
+// periodic flush: flush buffered usages that haven't had activity for 30 minutes
+setInterval(async () => {
+  try {
+    const now = Date.now()
+    const timeoutMs = 30 * 60 * 1000 // 30 minutes
+    for (const [k, buf] of bufferedUsages.entries()) {
+      if ((now - (buf.lastActivityAt || Date.now())) > timeoutMs) {
+        console.log('[DEBUG] periodic flush for buffer', k)
+        await flushBufferedUsage(k, 'timeout')
+      }
+    }
+  } catch (e) {
+    console.error('[ERROR] periodic flush error', e && e.message)
+  }
+}, 60 * 1000)
+
 async function recordSession(clientId, socketId, startMs, endMs) {
   if (!sessionsColl) return
   try {
     const durationMs = Math.max(0, (endMs - startMs))
-    await sessionsColl.insertOne({
+    const ins = await sessionsColl.insertOne({
       client_id: clientId || null,
       socket_id: socketId,
       start_at: new Date(startMs).toISOString(),
@@ -402,6 +524,8 @@ async function recordSession(clientId, socketId, startMs, endMs) {
       durationMs,
       created_at: new Date().toISOString()
     })
+    // emit realtime session event
+    try { if (typeof io !== 'undefined' && io) io.emit('session:recorded', { _id: ins.insertedId && ins.insertedId.toString(), client_id: clientId || null, socket_id: socketId, start_at: new Date(startMs).toISOString(), end_at: new Date(endMs).toISOString(), durationMs }) } catch(e) {}
     // no logging here to avoid noisy output
   } catch (e) {
     // ignore duplicate/insert errors
@@ -799,7 +923,9 @@ app.get('/status/usage-by-page', async (req, res) => {
     const out = []
     for (const name of usageCols) {
       const coll = mdb.collection(name)
+      // Only count session documents (those with a start_at). Event-only docs (click events) should not increase session counts.
       const agg = await coll.aggregate([
+        { $match: { start_at: { $exists: true } } },
         { $group: { _id: null, count: { $sum: 1 }, avgMs: { $avg: '$durationMs' }, withDuration: { $sum: { $cond: [{ $ifNull: ['$durationMs', false] }, 1, 0] } } } }
       ]).toArray()
       const row = (agg && agg[0]) || { count: 0, avgMs: 0, withDuration: 0 }
@@ -867,6 +993,98 @@ app.get('/status/daily-page-users', async (req, res) => {
   }
 })
 
+// Returns daily page views (total visits) for page/day or series
+// Usage examples:
+// /status/daily-page-views?page=/gamepicture&day=2025-11-25
+// /status/daily-page-views?page=/gamepicture&limit=7
+// /status/daily-page-views?day=2025-11-25  (all pages for a day)
+app.get('/status/daily-page-views', async (req, res) => {
+  try {
+    if (!dailyPageViewsColl) return res.json({ success: false, message: 'DB not available' })
+    const page = req.query.page || null
+    const day = req.query.day || null
+    const limit = Math.min(120, parseInt(req.query.limit || '30', 10))
+
+    if (page && day) {
+      const doc = await dailyPageViewsColl.findOne({ page, day })
+      return res.json({ success: true, data: doc ? { page: doc.page, day: doc.day, count: doc.count || 0 } : { page, day, count: 0 }, source: 'db', timestamp: new Date().toISOString() })
+    }
+
+    if (page && !day) {
+      // last N days for page
+      const docs = await dailyPageViewsColl.find({ page }).sort({ day: -1 }).limit(limit).toArray()
+      return res.json({ success: true, data: docs.map(d => ({ page: d.page, day: d.day, count: d.count || 0 })), source: 'db', timestamp: new Date().toISOString() })
+    }
+
+    if (!page && day) {
+      // all pages for a specific day
+      const docs = await dailyPageViewsColl.find({ day }).sort({ count: -1 }).toArray()
+      return res.json({ success: true, data: docs.map(d => ({ page: d.page, day: d.day, count: d.count || 0 })), source: 'db', timestamp: new Date().toISOString() })
+    }
+
+    // neither page nor day: return recent entries
+    const docs = await dailyPageViewsColl.find({}).sort({ day: -1, page: 1 }).limit(limit).toArray()
+    return res.json({ success: true, data: docs.map(d => ({ page: d.page, day: d.day, count: d.count || 0 })), source: 'db', timestamp: new Date().toISOString() })
+  } catch (e) {
+    console.error('[ERROR] /status/daily-page-views', e)
+    res.status(500).json({ success: false, message: 'failed' })
+  }
+})
+
+// Summary per page for a single day: returns unique users (daily_page_counts) and views (daily_page_views)
+// Usage: /status/daily-page-summary?day=2025-11-25
+app.get('/status/daily-page-summary', async (req, res) => {
+  try {
+    const day = req.query.day || new Date().toISOString().slice(0, 10)
+    if (!day) return res.json({ success: false, message: 'day required' })
+
+    // If no DB collections available, return error
+    if (!dailyPageCountsColl && !dailyPageViewsColl && !dailyPageUsersColl) {
+      return res.json({ success: false, message: 'DB not available' })
+    }
+
+    // Fetch counts (unique users per page) if available
+    let countsDocs = []
+    if (dailyPageCountsColl) {
+      countsDocs = await dailyPageCountsColl.find({ day }).toArray()
+    } else if (dailyPageUsersColl) {
+      // fallback: aggregate unique users per page from daily_page_users
+      const agg = await dailyPageUsersColl.aggregate([
+        { $match: { day } },
+        { $group: { _id: '$page', count: { $sum: 1 } } }
+      ]).toArray()
+      countsDocs = agg.map(a => ({ page: a._id, day, count: a.count }))
+    }
+
+    // Fetch views if available
+    let viewsDocs = []
+    if (dailyPageViewsColl) {
+      viewsDocs = await dailyPageViewsColl.find({ day }).toArray()
+    }
+
+    // Merge results by page
+    const map = new Map()
+    countsDocs.forEach(d => {
+      const p = d.page || d._id || 'unknown'
+      map.set(p, Object.assign(map.get(p) || {}, { page: p, day: d.day || day, uniqueCount: d.count || 0 }))
+    })
+    viewsDocs.forEach(d => {
+      const p = d.page || d._id || 'unknown'
+      map.set(p, Object.assign(map.get(p) || {}, { page: p, day: d.day || day, views: d.count || 0 }))
+    })
+
+    // If neither collection had an entry for some pages, we still want to return something reasonable
+    const out = Array.from(map.values()).map(item => ({ page: item.page, day: item.day, uniqueCount: item.uniqueCount || 0, views: item.views || 0 }))
+    // sort by uniqueCount desc then views desc
+    out.sort((a, b) => (b.uniqueCount - a.uniqueCount) || (b.views - a.views))
+
+    return res.json({ success: true, day, data: out, timestamp: new Date().toISOString() })
+  } catch (e) {
+    console.error('[ERROR] /status/daily-page-summary', e)
+    res.status(500).json({ success: false, message: 'failed' })
+  }
+})
+
 // Summary by section for a given page
 app.get('/status/usage-by-section', async (req, res) => {
   try {
@@ -875,6 +1093,8 @@ app.get('/status/usage-by-section', async (req, res) => {
     const coll = getPageUsageColl(page) || usageColl
     if (!coll) return res.json({ success: false, message: 'DB not available' })
     const agg = await coll.aggregate([
+      // Only include session documents (have start_at). Exclude event-only docs to avoid counting each click.
+      { $match: { start_at: { $exists: true } } },
       { $group: { _id: '$section', count: { $sum: 1 }, avgMs: { $avg: '$durationMs' } } },
       { $sort: { count: -1 } }
     ]).toArray()
@@ -891,12 +1111,15 @@ app.get('/status/recent-usage', async (req, res) => {
   try {
     const page = req.query.page || ''
     const limit = Math.min(200, parseInt(req.query.limit || '50', 10))
+    const source = req.query.source || null
     if (!page) return res.json({ success: false, message: 'page required' })
     const coll = getPageUsageColl(page)
     if (coll) {
       const docs = await coll.find({}).sort({ created_at: -1 }).limit(limit).toArray()
       return res.json({ success: true, data: docs, source: 'db', timestamp: new Date().toISOString() })
     }
+    // If caller explicitly requested DB-only, return error instead of falling back to file
+    if (source === 'db') return res.json({ success: false, message: 'DB not available' })
     // fallback: read file
     const usageDir = path.join(DATA_DIR, 'usage')
     const safePage = String(page || 'unknown').replace(/[^a-zA-Z0-9-_\.]/g, '_').replace(/^_+/, '')
@@ -926,26 +1149,76 @@ app.get('/socket-client.js', (req, res) => {
       socket.on('disconnect', function(reason){ console.log('[DEBUG] socket-client disconnected', reason); if(socket.__heartbeatInterval) clearInterval(socket.__heartbeatInterval); });
       socket.on('clientCount', function(count){ console.log('Active clients:', count); var el=document.getElementById('user-count'); if(el) el.textContent='จำนวนผู้ใช้งาน: '+count; });
 
-      // Usage tracker helper (auto-starts a usage record per page and records visibility changes)
-      function usageStart(page, section){ try{ var p = page||location.pathname; var payload={ clientId: clientId, page: p, section: section||null, timestamp: new Date().toISOString() }; return fetch('/api/usage/start',{ method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).then(r=>r.json()).then(function(res){ try{ if(res && res.usageId){ __usageCurrentByPage = __usageCurrentByPage || {}; __usageCurrentByPage[p] = res.usageId; } }catch(e){} return res }).catch(e=>{ console.warn('usage start failed', e); return null; }); }catch(e){console.warn('usageStart err',e);return null;} }
-      function usageEnd(usageId, page, section){ try{ var p = page||location.pathname; var id = usageId || ( (__usageCurrentByPage && __usageCurrentByPage[p]) ? __usageCurrentByPage[p] : null ); var payload={ usageId: id, clientId: clientId, page: p, section: section||null, timestamp: new Date().toISOString() }; return fetch('/api/usage/end',{ method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).then(r=>r.json()).then(function(res){ try{ if(id && __usageCurrentByPage && __usageCurrentByPage[p]===id) delete __usageCurrentByPage[p]; }catch(e){} return res }).catch(e=>{ console.warn('usage end failed', e); return null; }); }catch(e){console.warn('usageEnd err',e);return null;} }
-      function usageEvent(name, data, page, section){ try{ var p = page||location.pathname; var payload={ clientId: clientId, page: p, section: section||null, name: name, data: data||null, timestamp: new Date().toISOString() }; return fetch('/api/usage/event',{ method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).then(r=>r.json()).catch(e=>{ console.warn('usage event failed', e); return null; }); }catch(e){console.warn('usageEvent err',e);return null;} }
+      // Usage tracker helper (idempotent start/end per page)
+      var __usageCurrentByPage = {};
+      function usageStart(page, section){
+        try{
+          var p = page||location.pathname;
+          // if we already have a usageId for this page, don't start another
+          __usageCurrentByPage = __usageCurrentByPage || {};
+          if(__usageCurrentByPage[p]){
+            return Promise.resolve({ success: true, usageId: __usageCurrentByPage[p] });
+          }
+          var payload={ clientId: clientId, page: p, section: section||null, timestamp: new Date().toISOString() };
+          return fetch('/api/usage/start',{ method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), keepalive: true }).then(r=>r.json()).then(function(res){
+            try{ if(res && res.usageId){ __usageCurrentByPage = __usageCurrentByPage || {}; __usageCurrentByPage[p] = res.usageId; } }catch(e){}
+            return res
+          }).catch(e=>{ console.warn('usage start failed', e); return null; });
+        }catch(e){console.warn('usageStart err',e);return Promise.resolve(null);} 
+      }
+      function usageEnd(usageId, page, section){
+        try{
+          var p = page||location.pathname;
+          __usageCurrentByPage = __usageCurrentByPage || {};
+          var id = usageId || (__usageCurrentByPage[p] ? __usageCurrentByPage[p] : null);
+          if(!id) return Promise.resolve({ success: false, message: 'no open usage' });
+          var payload={ usageId: id, clientId: clientId, page: p, section: section||null, timestamp: new Date().toISOString() };
+          // prefer sendBeacon for unload scenarios; here use fetch
+          return fetch('/api/usage/end',{ method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), keepalive: true }).then(r=>r.json()).then(function(res){
+            try{ if(id && __usageCurrentByPage && __usageCurrentByPage[p]===id) delete __usageCurrentByPage[p]; }catch(e){}
+            return res
+          }).catch(e=>{ console.warn('usage end failed', e); return null; });
+        }catch(e){console.warn('usageEnd err',e);return Promise.resolve(null);} 
+      }
+      function usageEvent(name, data, page, section){
+        try{
+          var p = page||location.pathname;
+          var payload={ clientId: clientId, page: p, section: section||null, name: name, data: data||null, timestamp: new Date().toISOString() };
+          return fetch('/api/usage/event',{ method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).then(r=>r.json()).catch(e=>{ console.warn('usage event failed', e); return null; });
+        }catch(e){console.warn('usageEvent err',e);return Promise.resolve(null);} 
+      }
 
       // Expose basic API for pages
-      window.usageTracker = {
-        start: usageStart,
-        end: usageEnd,
-        event: usageEvent
-      };
+      window.usageTracker = { start: usageStart, end: usageEnd, event: usageEvent };
 
-      var __usageCurrentByPage = {};
-      function autoStart(){ usageStart(location.pathname, 'page'); }
-      function autoEnd(){ usageEnd(null, location.pathname, 'page'); }
+      function autoStart(){
+        try{ usageStart(location.pathname, 'page'); }catch(e){}
+      }
+      function autoEnd(){
+        try{ usageEnd(null, location.pathname, 'page'); }catch(e){}
+      }
 
       document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'hidden'){ autoEnd(); } else { autoStart(); } });
-      window.addEventListener('beforeunload', function(){ try{ if(__usageCurrent){ var payload = JSON.stringify({ usageId: __usageCurrent, clientId: clientId, timestamp: new Date().toISOString() }); if(navigator.sendBeacon) { navigator.sendBeacon('/api/usage/end', payload); } else { navigator.fetch('/api/usage/end', { method: 'POST', headers: { 'Content-Type':'application/json' }, body: payload, keepalive: true }).catch(function(){}); } } }catch(e){} });
+      window.addEventListener('beforeunload', function(){
+        try{
+          // end all open usages for pages before unload using navigator.sendBeacon when available
+          try{
+            var keys = Object.keys(__usageCurrentByPage || {});
+            if(keys.length){
+              keys.forEach(function(p){
+                try{
+                  var id = __usageCurrentByPage[p];
+                  var payload = JSON.stringify({ usageId: id, clientId: clientId, page: p, timestamp: new Date().toISOString() });
+                  if(navigator && navigator.sendBeacon){ navigator.sendBeacon('/api/usage/end', payload); }
+                  else { navigator.fetch('/api/usage/end', { method: 'POST', headers: { 'Content-Type':'application/json' }, body: payload, keepalive: true }).catch(function(){}); }
+                }catch(e){}
+              });
+            }
+          }catch(e){}
+        }catch(e){}
+      });
 
-      // start immediately
+      // start once immediately for current page
       autoStart();
     }catch(e){ console.error('socket-client failed', e); }
   })();`)
