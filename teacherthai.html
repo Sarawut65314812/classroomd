@@ -207,11 +207,15 @@ function startActivity() {
   const topic = document.getElementById('topicInput').value.trim();
   const unit = document.getElementById('unitInput').value.trim();
   const teacher = document.getElementById('teacherInput').value.trim();
+  const userName = document.getElementById('userNameInput').value.trim(); // เพิ่มการดึงชื่อผู้ทดสอบ
+
   // Allow starting even if some fields are empty — use defaults
   const cfgWeek = week || '-';
   const cfgTopic = topic || 'ไม่ระบุ';
   const cfgUnit = unit || '-';
   const cfgTeacher = teacher || 'ไม่ระบุ';
+  const cfgUserName = userName || 'ไม่ระบุ'; // ใช้ค่าเริ่มต้นหากไม่มีการกรอก
+
   if (allQuestions.length === 0) console.warn('[START] Starting activity with 0 questions');
 
   const config = {
@@ -219,6 +223,7 @@ function startActivity() {
     topic: cfgTopic,
     unit: cfgUnit,
     teacher: cfgTeacher,
+    userName: cfgUserName, // เพิ่มชื่อผู้ทดสอบใน config
     questions: allQuestions || []
   };
 
@@ -231,34 +236,39 @@ function saveActivity() {
   const topic = document.getElementById('topicInput').value.trim();
   const unit = document.getElementById('unitInput').value.trim();
   const teacher = document.getElementById('teacherInput').value.trim();
+  const userName = document.getElementById('userNameInput').value.trim(); // เพิ่มการดึงชื่อผู้ทดสอบ
+
   // Allow saving partial activity — use defaults where missing
   const cfgWeek = week || '-';
   const cfgTopic = topic || 'ไม่ระบุ';
   const cfgUnit = unit || '-';
   const cfgTeacher = teacher || 'ไม่ระบุ';
+  const cfgUserName = userName || 'ไม่ระบุ'; // ใช้ค่าเริ่มต้นหากไม่มีการกรอก
+
   if (allQuestions.length === 0) console.warn('[SAVE] saving activity with 0 questions');
 
   let savedActivities = JSON.parse(localStorage.getItem('savedActivities') || '[]');
-  
+
   // ตรวจสอบว่ากำลังแก้ไขกิจกรรมเดิมหรือไม่
   if (window.editingActivityId) {
     const activity = savedActivities.find(a => a.id === window.editingActivityId);
-    
+
     if (activity) {
       activity.config = {
-        week: week,
-        topic: topic,
-        unit: unit,
-        teacher: teacher,
+        week: cfgWeek,
+        topic: cfgTopic,
+        unit: cfgUnit,
+        teacher: cfgTeacher,
+        userName: cfgUserName, // เพิ่มชื่อผู้ทดสอบใน config
         questions: allQuestions
       };
-      activity.topic = topic;
+      activity.topic = cfgTopic;
       activity.savedAtDisplay = new Date().toLocaleString('th-TH');
-      
+
       localStorage.setItem('savedActivities', JSON.stringify(savedActivities));
-      
+
       alert(`✅ อัพเดตกิจกรรม "${activity.name}" สำเร็จ!`);
-      
+
       delete window.editingActivityId;
       delete window.editingActivityName;
       return;
@@ -266,9 +276,9 @@ function saveActivity() {
   }
 
   const activityName = prompt('ตั้งชื่อกิจกรรม:', `${cfgTopic} - สัปดาห์ ${cfgWeek}`);
-  
+
   if (!activityName) return;
-  
+
   const activity = {
     id: Date.now(),
     name: activityName,
@@ -279,15 +289,16 @@ function saveActivity() {
       topic: cfgTopic,
       unit: cfgUnit,
       teacher: cfgTeacher,
+      userName: cfgUserName, // เพิ่มชื่อผู้ทดสอบใน config
       questions: allQuestions || []
     },
     savedAt: new Date().toISOString(),
     savedAtDisplay: new Date().toLocaleString('th-TH')
   };
-  
+
   savedActivities.push(activity);
   localStorage.setItem('savedActivities', JSON.stringify(savedActivities));
-  
+
   alert(`✅ บันทึกกิจกรรม "${activityName}" สำเร็จ!`);
 }
 
