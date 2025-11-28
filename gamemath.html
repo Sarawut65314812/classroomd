@@ -68,6 +68,7 @@ body::before {
   min-width: 100px;
   text-align: center;
   filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+  z-index: 10;
 }
 
 .answer-item:active {
@@ -240,6 +241,23 @@ let playCount = 1; // นับจำนวนครั้งที่เล่�
 let teacherConfig = JSON.parse(localStorage.getItem('emojiGameConfig') || '{}');
 document.getElementById('topicName').innerText = teacherConfig.topic || 'Unknown';
 
+// ถ้าเพิ่งเลือกกิจกรรม (loadActivity) ให้ถามชื่อผู้ทดสอบ (optional)
+if (window.location.hash === '#promptUserName') {
+  setTimeout(() => {
+    let userName = prompt('กรุณากรอกชื่อผู้ทดสอบ (ถ้าไม่กรอกจะข้ามได้):', teacherConfig.userName || '');
+    if (userName !== null) {
+      userName = userName.trim();
+      // อัปเดตใน localStorage
+      const config = JSON.parse(localStorage.getItem('emojiGameConfig') || '{}');
+      config.userName = userName;
+      localStorage.setItem('emojiGameConfig', JSON.stringify(config));
+      teacherConfig.userName = userName;
+    }
+    // ลบ hash เพื่อไม่ให้ถามซ้ำ
+    window.location.hash = '';
+  }, 300);
+}
+
 // ตรวจสอบและกำหนดค่าเริ่มต้นให้ teacherConfig
 if (!teacherConfig || typeof teacherConfig !== 'object') {
   teacherConfig = {
@@ -251,6 +269,26 @@ if (!teacherConfig || typeof teacherConfig !== 'object') {
   };
   console.warn('teacherConfig ไม่ถูกตั้งค่าใน localStorage, ใช้ค่าเริ่มต้นแทน:', teacherConfig);
 }
+
+// ตรวจสอบ userName
+if (!teacherConfig.userName) {
+  teacherConfig.userName = 'ไม่ระบุ';
+}
+
+// ตรวจสอบและกำหนดค่าเริ่มต้นให้ teacherConfig.correctImages
+if (!Array.isArray(teacherConfig.correctImages)) {
+  teacherConfig.correctImages = [];
+}
+
+// โหลดข้อมูลกิจกรรมจาก localStorage
+const savedActivities = JSON.parse(localStorage.getItem('savedActivities') || '[]');
+if (savedActivities.length > 0) {
+  const latestActivity = savedActivities[savedActivities.length - 1]; // ใช้กิจกรรมล่าสุด
+  teacherConfig.correctImages = latestActivity.config.questions || [];
+}
+
+// ใช้จำนวนคำถามทั้งหมดจาก teacherConfig.correctImages
+const totalQuestions = teacherConfig.correctImages.length || 0;
 
 // โหลดโจทย์ทั้งหมดและสุ่มลำดับ
 if (teacherConfig.questions && teacherConfig.questions.length > 0) {
@@ -267,6 +305,9 @@ gameStarted = true;
 const _correctZoneEl = document.getElementById('correctZone');
 if (_correctZoneEl) {
   _correctZoneEl.style.border = '4px dashed #27ae60';
+  _correctZoneEl.style.color = '#27ae60';
+  _correctZoneEl.style.boxShadow = '0 10px 30px rgba(14, 226, 17, 0.1)';
+  _correctZoneEl.style.background = 'linear-gradient(135deg, #e0ffe8 0%, #b2f7c1 100%)';
 }
 
 // ปุ่มย้อนกลับหน้าครู
@@ -276,20 +317,37 @@ if (_correctZoneEl) {
 function showFeedback(isCorrect) {
   const overlay = document.getElementById('feedbackOverlay');
   const message = document.getElementById('feedbackMessage');
-  
+
+  // Play sound effect
   if (isCorrect) {
     message.innerText = '✅';
     message.style.color = '#4CAF50';
+    playWinnerSound();
   } else {
     message.innerText = '❌';
     message.style.color = '#f44336';
+    playFailSound();
   }
-  
+
   overlay.style.display = 'flex';
-  
+
   setTimeout(() => {
     overlay.style.display = 'none';
   }, 800);
+}
+
+// เสียงถูกต้อง (winner)
+function playWinnerSound() {
+  const audio = new Audio('/Sound/winner.mp3');
+  audio.volume = 0.5;
+  audio.play();
+}
+
+// เสียงผิด (fail)
+function playFailSound() {
+  const audio = new Audio('/Sound/fail.mp3'); // short fail sound
+  audio.volume = 0.5;
+  audio.play();
 }
 
 
@@ -445,7 +503,7 @@ function nextQuestion() {
 // จบเกมทันทีพร้อมผลลัพธ์
 function endGame(message, color) {
   document.getElementById('topicDisplay').innerText = teacherConfig.topic || 'ไม่ระบุ';
-  document.getElementById('playerNameDisplay').innerText = teacherConfig.playerName || 'ไม่ระบุชื่อ';
+  document.getElementById('playerNameDisplay').innerText = teacherConfig.userName || 'ไม่ระบุชื่อ';
   document.getElementById('resultMessage').innerText = message;
   document.getElementById('resultMessage').style.color = color;
   document.getElementById('finalScore').innerText = `${score}/${allQuestions.length}`;
@@ -592,7 +650,7 @@ function saveResult() {
     const pdfContent = document.createElement('div');
     pdfContent.innerHTML = `
       <div style="font-family: 'Arial', sans-serif; color: #333; position: relative;">
-        <div style="position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) rotate(45deg); font-size:110px; color:rgba(0,0,0,0.06); font-weight:700; pointer-events:none; z-index:9999; white-space:nowrap;">Espresso</div>
+        <div style="position:absolute; left:50%; top:60%; transform:translate(-50%,-50%) rotate(45deg); font-size:200px; color:rgba(0,0,0,0.07); font-weight:400; pointer-events:none; z-index:9999; white-space:nowrap;">Espresso</div>
         <div style="position: absolute; top: 8px; right: 12px; font-size: 12px; color: #333;">วันที่: ${dateStr} เวลา: ${timeStr}</div>
         <div style="text-align: center; margin-bottom: 12px; display:flex; align-items:center; justify-content:center; gap:18px; flex-wrap:wrap;">
                 <img src="/picture/Huaroa.jpg" alt="Logo Huaroa" style="height:220px; width:auto; max-width:60%; margin-bottom:10px; display:block;" />
@@ -627,10 +685,41 @@ function saveResult() {
             </tr>
           </table>
         </div>
+      <div style="background: #f8f9fa; border: 3px solid #251f03; border-radius: 10px; padding: 20px; margin-bottom: 20px; text-align: center;">
+          <p style="font-size: 16px; margin: 0 0 15px 0; color: #555;"><strong>คะแนนที่ได้รับ</strong></p>
+          <p style="font-size: 28px; color: #000000; font-weight: bold;">${score}/${teacherConfig.correctImages?.length || 0}</p>
+        </div>
+        <div style="margin-top: 70px; text-align: center;">
+        <p style="margin: 0; font-size: 13px; color: #333;">ลงชื่อ _______________________</p>
+        <p style="margin: 8px 0 0 0; font-size: 13px; color: #333;">ครูผู้รับผิดชอบ</p>
+        <p style="margin: 8px 0 0 0; font-size: 13px; color: #333;">( _______________________ )</p>
+      </div>
+       <div id="companyContactWrapper" style="font-size: 14px; color: #333; text-align: right; line-height:1.1; margin-top: 80px;">
+      <div style="display: inline-block; text-align: right;">
+        บริษัท กว้างไม่ จำกัด<br>
+        263/1 ต.หัวรอ อ.เมือง จ.พิษณุโลก 65000<br>
+        ติดต่อเราได้ที่<br>
+        โทร : 083-654-9743<br>
+        เว็บไซต์ : www.kwangunlimit.com
+      </div>
       </div>
     `;
 
-    html2pdf().set(opt).from(pdfContent).save();
+    // ตรวจสอบและเพิ่มชื่อผู้ทดสอบใน PDF
+    const activityInfoTable = pdfContent.querySelector('table');
+    const userNameRow = document.createElement('tr');
+    userNameRow.innerHTML = `
+      <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ชื่อผู้ทดสอบ:</td>
+      <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.userName || '-'}</td>
+    `;
+
+    // เพิ่มชื่อผู้ทดสอบไปที่ล่างสุดของตาราง
+    activityInfoTable.appendChild(userNameRow);
+
+    const element = document.createElement('div');
+    element.innerHTML = pdfContent;
+
+    html2pdf().set(opt).from(element).save();
   } catch (error) {
     console.error('Error saving PDF:', error);
   }
@@ -680,12 +769,11 @@ function buildPdfElement() {
         <p style="font-size: 16px; margin: 0 0 15px 0; color: #555;"><strong>คะแนนที่ได้รับ</strong></p>
         <p style="font-size: 28px; color: #000000; font-weight: bold;">${score}/${allQuestions.length || 0}</p>
       </div>
-      <div style="margin-top: 100px; text-align: center;">
+      <div style="margin-top: 70px; text-align: center;">
         <p style="margin: 0; font-size: 13px; color: #333;">ลงชื่อ _______________________</p>
         <p style="margin: 8px 0 0 0; font-size: 13px; color: #333;">ครูผู้รับผิดชอบ</p>
         <p style="margin: 8px 0 0 0; font-size: 13px; color: #333;">( _______________________ )</p>
       </div>
-    </div>
     <div id="companyContactWrapper" style="font-size: 14px; color: #333; text-align: right; line-height:1.1; margin-top: 100px;">
       <div style="display: inline-block; text-align: right;">
         บริษัท กว้างไม่ จำกัด<br>
@@ -716,7 +804,16 @@ async function shareScore() {
       jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
     };
 
-    // Use shared PDF element so share and download are identical
+    // ใช้คะแนนจาก #finalScore ใน popup มาแสดงใน PDF
+const finalScoreElement = document.getElementById('finalScore');
+if (finalScoreElement) {
+  score = parseInt(finalScoreElement.innerText, 10) || 0;
+}
+
+    // ใช้จำนวนคำถามทั้งหมดจาก teacherConfig.correctImages
+const totalQuestions = teacherConfig.correctImages.length || 0;
+
+// Build PDF element
     const element = buildPdfElement();
 
 
@@ -869,7 +966,6 @@ function exportToPDF() {
     const date = new Date();
     const dateStr = date.toLocaleDateString('th-TH');
     const timeStr = date.toLocaleTimeString('th-TH');
-    
     const opt = {
       margin: [12, 12, 12, 12],
       filename: `${teacherConfig.topic || 'score'}_${date.toISOString().split('T')[0]}.pdf`,
@@ -877,13 +973,93 @@ function exportToPDF() {
       html2canvas: { scale: 2 },
       jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
     };
+    const pdfContent = document.createElement('div');
+    // ดึงชื่อผู้ทดสอบจาก localStorage (emojiGameConfig.userName)
+    let userName = '-';
+    try {
+      const config = JSON.parse(localStorage.getItem('emojiGameConfig') || '{}');
+      if (config.userName) userName = config.userName;
+    } catch (e) {}
 
-    // Use the shared buildPdfElement so download and share produce identical PDF
-    const element = buildPdfElement();
-    html2pdf().set(opt).from(element).save();
+    pdfContent.innerHTML = `
+      <div style="font-family: 'Arial', sans-serif; color: #333;">
+         <div style="position:absolute; left:50%; top:60%; transform:translate(-50%,-50%) rotate(45deg); font-size:200px; color:rgba(0,0,0,0.07); font-weight:400; pointer-events:none; z-index:9999; white-space:nowrap;">Espresso</div>
+      <div style="position: absolute; top: 1px; right: 12px; font-size: 12px; color: #333;">วันที่: ${dateStr} เวลา: ${timeStr}</div>
+      <div style="text-align: center; margin: 40px 0 12px 0; display:flex; align-items:center; justify-content:center; gap:18px; flex-wrap:wrap;">
+                <img src="/picture/Huaroa.jpg" alt="Logo Huaroa" style="height:110px; width:auto; max-width:40%; margin-bottom:10px; display:block;" />
+                <img src="/picture/kwang_logo3.png" alt="Kwang Logo" style="height:110px; width:auto; max-width:30%; margin-bottom:10px; display:block;" />
+      </div>
+         <div style="text-align: center; background: linear-gradient(135deg, #ebd09e 0%, #251f03 100%); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+        <h1 style="margin: 5px 0; font-size: 32px;">Espresso</h1>
+        <p style="margin: 5px 0; font-size: 18px;">รายงานผลการประเมินกิจกรรมตัวเลข</p>
+      </div>
+       <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+        <p style="font-size: 14px; font-weight: bold; margin: 0 0 10px 0; color: #251f03;">ข้อมูลกิจกรรม</p>
+          <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+  
+            <tr>
+              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สัปดาห์ที่:</td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.week || '-'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สาระการเรียนรู้:</td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.topic || '-'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">หน่วยการเรียนรู้:</td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.unit || '-'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ครูผู้รับผิดชอบ:</td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.teacher || '-'}</td>
+            </tr>
+          </table>
+        </div>
+      <div style="background: #f8f9fa; border: 3px solid #251f03; border-radius: 10px; padding: 20px; margin-bottom: 20px; text-align: center;">
+          <p style="font-size: 16px; margin: 0 0 15px 0; color: #555;"><strong>คะแนนที่ได้รับ</strong></p>
+          <p style="font-size: 28px; color: #000000; font-weight: bold;">${score}/${teacherConfig.correctImages?.length || 0}</p>
+        </div>
+
+        <div style="margin-top: 65px; text-align: center;">
+        <p style="margin: 0; font-size: 13px; color: #333;">ลงชื่อ _______________________</p>
+        <p style="margin: 8px 0 0 0; font-size: 13px; color: #333;">ครูผู้รับผิดชอบ</p>
+        <p style="margin: 8px 0 0 0; font-size: 13px; color: #333;">( _______________________ )</p>
+      </div>
+       <div id="companyContactWrapper" style="font-size: 14px; color: #333; text-align: right; line-height:1.1; margin-top: 80px;">
+      <div style="display: inline-block; text-align: right;">
+        บริษัท กว้างไม่ จำกัด<br>
+        263/1 ต.หัวรอ อ.เมือง จ.พิษณุโลก 65000<br>
+        ติดต่อเราได้ที่<br>
+        โทร : 083-654-9743<br>
+        เว็บไซต์ : www.kwangunlimit.com
+      </div>
+      </div>
+    `;
+
+    // ตรวจสอบและเพิ่มชื่อผู้ทดสอบใน PDF
+    const activityInfoTable = pdfContent.querySelector('table');
+    const userNameRow = document.createElement('tr');
+    userNameRow.innerHTML = `
+      <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ชื่อผู้ทดสอบ:</td>
+      <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.userName || '-'}</td>
+    `;
+
+    // เพิ่มชื่อผู้ทดสอบไปที่ล่างสุดของตาราง
+    activityInfoTable.appendChild(userNameRow);
+
+    html2pdf().set(opt).from(pdfContent).save();
   } catch (error) {
     console.error('Error saving PDF:', error);
   }
+}
+
+// ตรวจสอบข้อมูลใน emojiGameConfig
+const emojiGameConfig = JSON.parse(localStorage.getItem('emojiGameConfig') || '{}');
+if (!emojiGameConfig.questions || emojiGameConfig.questions.length === 0) {
+  console.warn('emojiGameConfig ไม่มีคำถาม');
+  alert('ไม่พบคำถามในกิจกรรม กรุณาตรวจสอบการตั้งค่ากิจกรรม');
+} else {
+  teacherConfig.correctImages = emojiGameConfig.questions;
 }
 
 // โหลดโจทย์
@@ -966,6 +1142,23 @@ function initGame() {
 
 // เริ่มเกมอัตโนมัติ
 initGame();
+
+// ตรวจสอบข้อมูลใน teacherConfig
+if (!teacherConfig.correctImages || teacherConfig.correctImages.length === 0) {
+  console.warn('teacherConfig.correctImages ไม่มีข้อมูลคำถาม');
+  alert('ไม่พบข้อมูลคำถามในกิจกรรมล่าสุด กรุณาตรวจสอบการตั้งค่ากิจกรรม');
+}
+
+if (score === undefined || score === null) {
+  console.warn('score ไม่มีค่า');
+  alert('คะแนนยังไม่ได้รับการตั้งค่า กรุณาตรวจสอบการเล่นเกม');
+}
+
+// ตรวจสอบจำนวนคำถามใน teacherConfig
+if (teacherConfig.correctImages.length !== allQuestions.length) {
+  console.warn('จำนวนคำถามใน teacherConfig.correctImages ไม่ตรงกับ allQuestions');
+  alert('จำนวนคำถามในกิจกรรมไม่ตรงกัน กรุณาตรวจสอบการตั้งค่ากิจกรรม');
+}
 </script>
 
 <!-- Removed the existing PDF generation logic and included the reusable script -->

@@ -8,19 +8,50 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/gamepicture.css">
+<script>
+// ฟังก์ชันเล่นเสียงดีใจจากไฟล์ winner.mp3
+function playSuccessSound() {
+  try {
+    let audio = document.getElementById('winner-audio');
+    if (!audio) {
+      audio = document.createElement('audio');
+      audio.id = 'winner-audio';
+      audio.src = '/sound/winner.mp3';
+      audio.preload = 'auto';
+      document.body.appendChild(audio);
+    }
+    audio.currentTime = 0;
+    audio.play();
+  } catch (e) {}
+}
+// ฟังก์ชันเล่นเสียงผิดจากไฟล์ fail.mp3
+function playFailSound() {
+  try {
+    let audio = document.getElementById('fail-audio');
+    if (!audio) {
+      audio = document.createElement('audio');
+      audio.id = 'fail-audio';
+      audio.src = '/sound/fail.mp3';
+      audio.preload = 'auto';
+      document.body.appendChild(audio);
+    }
+    audio.currentTime = 0;
+    audio.play();
+  } catch (e) {}
+}
+</script>
 <style>
   /* Override zone styling: larger touch targets and colored dashed borders */
   #zones { display:flex; gap:16px; justify-content:center; align-items:center; }
   #zones .zone {
     width: 40%;
-    height: 300px; /* Reduced from 400px */
+    height: 260px; /* ลดความสูงจาก 380px */
     border-radius: 18px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 72px;
     box-shadow: 0 6px 18px rgba(0,0,0,0.12);
-    background: transparent; /* remove white background */
     transition: transform 0.12s ease, box-shadow 0.12s ease;
     position: relative;
   }
@@ -35,15 +66,51 @@
     color: inherit;
   }
   /* Correct / Wrong zone styling (static glow, no animation) */
-  #correctZone { border: 4px dashed #27ae60; color: #27ae60; box-shadow: 0 10px 30px rgba(14, 226, 17, 0.1); }
-  #wrongZone { border: 4px dashed #e74c3c; color: #e74c3c; box-shadow: 0 10px 30px rgba(231,76,60,0.10); }
-  /* center page title */
-  .page-title { text-align: center; margin-top: 26px; margin-bottom: 14px; }
+  #correctZone { 
+    border: 4px dashed #27ae60; 
+    color: #27ae60; 
+    box-shadow: 0 10px 30px rgba(14, 226, 17, 0.1); 
+    background: linear-gradient(135deg, #e0ffe8 0%, #b2f7c1 100%);
+  }
+  #wrongZone { 
+    border: 4px dashed #e74c3c; 
+    color: #e74c3c; 
+    box-shadow: 0 10px 30px rgba(231,76,60,0.10); 
+    background: linear-gradient(135deg, #ffe0e0 0%, #f7b2b2 100%);
+  }
+
+  /* neon-btn: center text, auto width, neon border, responsive */
+  /* neon-btn: center text, auto width, neon border, responsive */
+  .neon-btn {
+    background: linear-gradient(180deg, #f8f6f0 0%, #fffef8 45%, #fff8e8 55%, #f5f0e5 100%);
+    color: #000000;
+    border: 6px solid #74640a;
+    border-radius: 9999px;
+    box-shadow: 1px 1px 0 #000, -4px 3px #3b3305, 0 0 10px rgba(255,230,160,0.45);
+    font-weight: 700;
+    font-size: clamp(0.9rem, 1.2vw, 1.1rem);
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3), 0 -1px 0 rgba(0, 0, 0, 0.1);
+    position: relative;
+    padding: 6px 16px;
+    transform: translateZ(0);
+    transition: all 0.3s ease;
+    z-index: 10;
+    min-height: 32px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+    margin-right: auto;
+    width: fit-content;
+    text-align: center;
+  }
+
 
   /* Adjust image size for larger display */
   #zones .zone img {
     max-width: 100%;
-    max-height: 100%;
+    max-height: 98%;
     object-fit: contain;
   }
 </style>
@@ -52,7 +119,7 @@
 </head>
 <body>
 
-<h2 class="page-title">สาระการเรียนรู้: <span id="topicName"></span></h2>
+<h2 class="neon-btn">หัวข้อกิจกรรม: <span id="topicName"></span></h2>
 <p id="scoreDisplay" style="display:none; font-size:26px; font-weight:700; color:#333; margin:18px 0 6px 0;">Score: <span id="score" style="font-size:34px; color:#27ae60;">0</span></p>
 
 
@@ -112,7 +179,9 @@ let __localUsageId = null;
 
 // โหลด config จาก localStorage
 let teacherConfig = JSON.parse(localStorage.getItem('emojiGameConfig') || '{}');
-document.getElementById('topicName').innerText = teacherConfig.topic || 'Unknown';
+const activityName = teacherConfig.mainTopic || teacherConfig.topic || 'กิจกรรม';
+document.getElementById('topicName').innerText = activityName;
+document.getElementById('topicDisplay').innerText = activityName;
 
 // แสดงเกมทันที
 document.getElementById('zones').style.display = 'flex';
@@ -175,6 +244,10 @@ async function shareResult() {
               <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
           <p style="font-size: 14px; font-weight: bold; margin: 0 0 10px 0; color: #667eea;">ข้อมูลกิจกรรม</p>
           <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+            <tr>
+              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ชื่อผู้ใช้งาน:</td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.userName || '-'}</td>
+            </tr>
             <tr>
               <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สัปดาห์ที่:</td>
               <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.week || '-'}</td>
@@ -257,6 +330,10 @@ function saveResult() {
         <p style="font-size: 14px; font-weight: bold; margin: 0 0 10px 0; color: #251f03;">ข้อมูลกิจกรรม</p>
           <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
             <tr>
+              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ชื่อผู้ใช้งาน:</td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.userName || '-'}</td>
+            </tr>
+            <tr>
               <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สัปดาห์ที่:</td>
               <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.week || '-'}</td>
             </tr>
@@ -272,24 +349,32 @@ function saveResult() {
               <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ครูผู้รับผิดชอบ:</td>
               <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.teacher || '-'}</td>
             </tr>
+             <tr>
+              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ผู้ทดสอบ:</td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.userName || '-'}</td>
+            </tr>
+             <tr>
+              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ผู้ทดสอบ:</td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.userName || '-'}</td>
+            </tr>
           </table>
         </div>
       <div style="background: #f8f9fa; border: 3px solid #251f03; border-radius: 10px; padding: 20px; margin-bottom: 20px; text-align: center;">
           <p style="font-size: 16px; margin: 0 0 15px 0; color: #555;"><strong>คะแนนที่ได้รับ</strong></p>
           <p style="font-size: 28px; color: #000000; font-weight: bold;">${score}/${teacherConfig.correctImages?.length || 0}</p>
         </div>
-        <div style="margin-top: 100px; text-align: center;">
+        <div style="margin-top: 70px; text-align: center;">
         <p style="margin: 0; font-size: 13px; color: #333;">ลงชื่อ _______________________</p>
         <p style="margin: 8px 0 0 0; font-size: 13px; color: #333;">ครูผู้รับผิดชอบ</p>
         <p style="margin: 8px 0 0 0; font-size: 13px; color: #333;">( _______________________ )</p>
       </div>
-       <div id="companyContactWrapper" style="font-size: 14px; color: #333; text-align: right; line-height:1.1; margin-top: 100px;">
+       <div id="companyContactWrapper" style="font-size: 14px; color: #333; text-align: right; line-height:1.1; margin-top: 80px;">
       <div style="display: inline-block; text-align: right;">
         บริษัท กว้างไม่ จำกัด<br>
         263/1 ต.หัวรอ อ.เมือง จ.พิษณุโลก 65000<br>
         ติดต่อเราได้ที่<br>
         โทร : 083-654-9743<br>
-        เว็บไซต์ : www.kwamgunlimit.com
+        เว็บไซต์ : www.kwangunlimit.com
       </div>
       </div>
     `;
@@ -339,6 +424,22 @@ function initGame() {
   });
 }
 
+// ฟังก์ชันเล่นเสียงดีใจจากไฟล์ winner.mp3
+function playSuccessSound() {
+  try {
+    let audio = document.getElementById('winner-audio');
+    if (!audio) {
+      audio = document.createElement('audio');
+      audio.id = 'winner-audio';
+      audio.src = '/sound/winner.mp3';
+      audio.preload = 'auto';
+      document.body.appendChild(audio);
+    }
+    audio.currentTime = 0;
+    audio.play();
+  } catch (e) {}
+}
+
 // สร้างรูปที่ลากได้
 function createDraggableImage(imgData, imageId, isCorrect) {
   if (createdImages[imageId]) return;
@@ -347,25 +448,32 @@ function createDraggableImage(imgData, imageId, isCorrect) {
   imageDiv.classList.add('image-item');
   imageDiv.innerHTML = `<img src="${imgData}" alt="Image">`;
 
-  // Place random images near the bottom of the screen so they don't spawn inside the zones
+  // วางรูปภาพเรียงกันเป็นแถวแนวนอนด้านล่าง ไม่ซ้อนกัน
   const estimatedImgW = 100;
   const estimatedImgH = 100;
   const horizontalPadding = 24;
-  const minX = horizontalPadding;
-  const maxX = Math.max(minX, window.innerWidth - estimatedImgW - horizontalPadding);
-  const startX = minX + Math.random() * (maxX - minX);
-
-  // Bottom area: keep images within a band near the bottom (not overlapping the zones)
-  const bottomBandHeight = 220; // px high area from the bottom where images will appear
-  const minY = Math.max(50, window.innerHeight - bottomBandHeight);
-  const maxY = Math.max(minY + 10, window.innerHeight - estimatedImgH - 12);
-  const startY = minY + Math.random() * (maxY - minY);
+  // นับจำนวนรูปที่สร้างแล้ว เพื่อจัดตำแหน่ง
+  const totalImages = document.querySelectorAll('.image-item').length;
+  const imagesPerRow = 6; // ปรับจำนวนรูปต่อแถวได้
+  const gap = 100; // ระยะห่างระหว่างรูป (เพิ่มขึ้น)
+  const row = Math.floor(totalImages / imagesPerRow);
+  const col = totalImages % imagesPerRow;
+  // คำนวณความกว้างรวมของแถว
+  const rowWidth = imagesPerRow * estimatedImgW + (imagesPerRow - 1) * gap;
+  const centerX = (window.innerWidth - rowWidth) / 2;
+  const startX = centerX + col * (estimatedImgW + gap);
+  // วางรูปภาพให้อยู่กลางจอแนวตั้งเสมอ (centered vertically)
+  const totalRows = Math.ceil((document.querySelectorAll('.image-item').length + 1) / imagesPerRow);
+  const imagesAreaHeight = totalRows * estimatedImgH + (totalRows - 1) * gap;
+  // ขยับลงล่างอีก (เพิ่ม offset 80px)
+  const centerY = (window.innerHeight - imagesAreaHeight) / 2 + 80;
+  const startY = centerY + row * (estimatedImgH + gap);
   // Disable random rotation: keep images upright but allow slight scale variation
   const angle = 0;
-  const scale = 0.9 + Math.random() * 0.2;
+  const scale = 1 + Math.random() * 0.2;
   imageDiv.style.left = `${startX}px`;
   imageDiv.style.top = `${startY}px`;
-  imageDiv.style.transform = `scale(${scale})`;
+  imageDiv.style.transform = `scale(${scale * 2.75})`;
 
   let offsetX, offsetY;
   function dragMove(posX, posY) {
@@ -416,8 +524,10 @@ function createDraggableImage(imgData, imageId, isCorrect) {
         rect.top + rect.height / 2 > correctZone.top && rect.top + rect.height / 2 < correctZone.bottom) {
       if (isCorrect) {
         score += 1;
+        playSuccessSound(); // เล่นเสียงดีใจเมื่อถูก
       } else {
         score -= 1;
+        playFailSound(); // เล่นเสียงผิดเมื่อผิด
       }
       document.getElementById('score').innerText = score;
       imageDiv.remove();
@@ -427,6 +537,10 @@ function createDraggableImage(imgData, imageId, isCorrect) {
                rect.top + rect.height / 2 > wrongZone.top && rect.top + rect.height / 2 < wrongZone.bottom) {
       if (isCorrect) {
         score -= 1;
+        playFailSound(); // เล่นเสียงผิดเมื่อผิด
+      } else {
+        // รูปผิดวางผิด zone (ไม่เพิ่ม/ลดคะแนน) แต่ให้เล่นเสียง winner ด้วย
+        playSuccessSound();
       }
       document.getElementById('score').innerText = score;
       imageDiv.remove();
@@ -589,14 +703,16 @@ window.onload = function() {
   }
 
   teacherConfig = JSON.parse(config);
-  document.getElementById('topicName').innerText = teacherConfig.topic || 'กิจกรรม';
+  const activityName = teacherConfig.mainTopic || teacherConfig.topic || 'กิจกรรม';
+  document.getElementById('topicName').innerText = activityName;
+  document.getElementById('topicDisplay').innerText = activityName;
 
   // Start the game automatically
   initGame();
   // เริ่มบันทึกการใช้งานสำหรับหน้านี้ (ถ้ามี usageTracker) — เรียกใน window.onload เพื่อให้แน่ใจว่า /socket-client.js ถูกโหลดแล้ว
   try {
     if (window.usageTracker && typeof window.usageTracker.start === 'function') {
-      __localUsageId = window.usageTracker.start(location.pathname || 'gamepicture.html', teacherConfig.topic || 'gamepicture');
+      __localUsageId = window.usageTracker.start(location.pathname || 'gamepicture.html', activityName);
       console.log('usage started', __localUsageId);
     }
   } catch (e) {

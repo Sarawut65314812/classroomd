@@ -157,9 +157,11 @@ function selectChoice(isCorrect, button) {
   if (isCorrect) {
     correctAnswers++;
     button.classList.add('correct');
+    playSound(true); // เล่นเสียงเมื่อถูก
   } else {
     wrongAnswers++;
     button.classList.add('wrong');
+    playSound(false); // เล่นเสียงเมื่อผิด
     
     // แสดงคำตอบที่ถูก
     allButtons.forEach(btn => {
@@ -407,6 +409,13 @@ function saveResult() {
   } catch (error) {
     console.error('Error saving PDF:', error);
   }
+}
+
+// ฟังก์ชันเล่นเสียงเมื่อถูกหรือผิด
+function playSound(isCorrect) {
+  const audio = new Audio(isCorrect ? '/Sound/winner.mp3' : '/Sound/fail.mp3');
+  audio.volume = 0.5;
+  audio.play();
 }
 </script>
 

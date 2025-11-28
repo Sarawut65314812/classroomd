@@ -323,11 +323,12 @@ button { cursor:pointer; }
   <h1>กิจกรรมเลข</h1>
   <h3>กรอกข้อมูลกิจกรรม</h3>
   
-  <div class="info-inputs">
+  <div class="info-inputs">  
     <input id="weekInput" placeholder="สัปดาห์ที่">
     <input id="topicInput" placeholder="สาระการเรียนรู้">
     <input id="unitInput" placeholder="หน่วยการเรียนรู้">
     <input id="teacherInput" placeholder="ครูผู้รับผิดชอบ">
+    <input id="userNameInput" placeholder="ชื่อผู้ทดสอบ">
   </div>
 </div>
 
@@ -377,6 +378,9 @@ button { cursor:pointer; }
 </div>
 
 <script>
+
+// ฟังก์ชันสำหรับ export PDF พร้อมชื่อผู้ทดสอบ
+
 let correctAnswers = [];
 let wrongAnswers = [];
 let allQuestions = []; // เก็บโจทย์ทั้งหมด
@@ -645,11 +649,13 @@ function saveConfig(){
   const topic = document.getElementById('topicInput').value.trim();
   const unit = document.getElementById('unitInput').value.trim();
   const teacher = document.getElementById('teacherInput').value.trim();
+  const userName = document.getElementById('userNameInput').value.trim();
   // Allow saving even with missing fields — use defaults
   const cfgWeek = week || '-';
   const cfgTopic = topic || 'ไม่ระบุ';
   const cfgUnit = unit || '-';
   const cfgTeacher = teacher || 'ไม่ระบุ';
+  const cfgUserName = userName || 'ไม่ระบุ';
   if (allQuestions.length === 0) console.warn('[SAVE] Saving config with 0 questions');
 
   // บันทึก config พร้อมโจทย์ทั้งหมด (accept empty questions)
@@ -658,6 +664,7 @@ function saveConfig(){
     topic: cfgTopic,
     unit: cfgUnit,
     teacher: cfgTeacher,
+    userName: cfgUserName,
     questions: allQuestions || []  // เก็บเป็น array ของโจทย์
   };
   localStorage.setItem('emojiGameConfig', JSON.stringify(config));
@@ -672,11 +679,13 @@ function saveActivity() {
   const topic = document.getElementById('topicInput').value.trim();
   const unit = document.getElementById('unitInput').value.trim();
   const teacher = document.getElementById('teacherInput').value.trim();
+  const userName = document.getElementById('userNameInput').value.trim();
   // Allow partial data — apply defaults where missing
   const cfgWeek = week || '-';
   const cfgTopic = topic || 'ไม่ระบุ';
   const cfgUnit = unit || '-';
   const cfgTeacher = teacher || 'ไม่ระบุ';
+  const cfgUserName = userName || 'ไม่ระบุ';
   if (allQuestions.length === 0) console.warn('[SAVE ACTIVITY] saving activity with 0 questions');
   let savedActivities = JSON.parse(localStorage.getItem('savedActivities') || '[]');
   
@@ -691,6 +700,7 @@ function saveActivity() {
         topic: cfgTopic,
         unit: cfgUnit,
         teacher: cfgTeacher,
+        userName: cfgUserName,
         questions: allQuestions || []
       };
       activity.topic = cfgTopic;
@@ -722,6 +732,7 @@ function saveActivity() {
       topic: cfgTopic,
       unit: cfgUnit,
       teacher: cfgTeacher,
+      userName: cfgUserName,
       questions: allQuestions || []
     },
     savedAt: new Date().toISOString(),
