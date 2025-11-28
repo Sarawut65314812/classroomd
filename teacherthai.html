@@ -135,62 +135,7 @@ function playActivity(activityId) {
   window.location.href = 'gamethai.html';
 }
 let allQuestions = [];
-// ฟังก์ชันสำหรับ export PDF พร้อมชื่อผู้ทดสอบ
-function exportPDFWithUserName() {
-  const userName = document.getElementById('userNameInput')?.value.trim() || '-';
-  const week = document.getElementById('weekInput')?.value.trim() || '-';
-  const topic = document.getElementById('topicInput')?.value.trim() || '-';
-  const unit = document.getElementById('unitInput')?.value.trim() || '-';
-  const teacher = document.getElementById('teacherInput')?.value.trim() || '-';
-  const date = new Date();
-  const dateStr = date.toLocaleDateString('th-TH');
-  const timeStr = date.toLocaleTimeString('th-TH');
-  const pdfContent = `
-    <div style="font-family: 'Arial', sans-serif; color: #333;">
-      <div style="text-align: center; margin-bottom: 12px;">
-        <img src='picture/Huaroa.jpg' alt='Logo' style='height: 120px; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;' />
-      </div>
-      <div style="text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-        <h1 style="margin: 5px 0; font-size: 24px;">รายงานผลการประเมินกิจกรรม</h1>
-        <p style="margin: 5px 0; font-size: 14px;">Smart Classroom Learning System</p>
-        <p style="margin: 5px 0; font-size: 12px;">วันที่: ${dateStr} เวลา: ${timeStr}</p>
-      </div>
-      <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
-        <p style="font-size: 14px; font-weight: bold; margin: 0 0 10px 0; color: #667eea;">ข้อมูลกิจกรรม</p>
-        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-          <tr>
-            <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ชื่อผู้ทดสอบ:</td>
-            <td style="padding: 8px; border-bottom: 1px solid #eee;">${userName}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สัปดาห์ที่:</td>
-            <td style="padding: 8px; border-bottom: 1px solid #eee;">${week}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สาระการเรียนรู้:</td>
-            <td style="padding: 8px; border-bottom: 1px solid #eee;">${topic}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">หน่วยการเรียนรู้:</td>
-            <td style="padding: 8px; border-bottom: 1px solid #eee;">${unit}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ครูผู้รับผิดชอบ:</td>
-            <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacher}</td>
-          </tr>
-        </table>
-      </div>
-      <div style="margin-top: 100px; text-align: center;">
-        <p style="margin: 0; font-size: 13px; color: #333;">ลงชื่อ _______________________</p>
-        <p style="margin: 8px 0 0 0; font-size: 13px; color: #333;">ผู้ทดสอบ</p>
-        <p style="margin: 5px 0 0 0; font-size: 13px; color: #333;">( ${userName} )</p>
-      </div>
-    </div>
-  `;
-  const element = document.createElement('div');
-  element.innerHTML = pdfContent;
-  html2pdf().from(element).save();
-}
+
 
 function addQuestion() {
   const question = document.getElementById('questionInput').value.trim();

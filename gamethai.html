@@ -348,6 +348,8 @@ function saveResult() {
       jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
     };
 
+    // เพิ่มชื่อผู้ทดสอบใน PDF
+    const userName = teacherConfig.userName || 'ไม่ระบุ';
     const pdfContent = document.createElement('div');
     pdfContent.innerHTML = `
       <div style="font-family: 'Arial', sans-serif; color: #333;">
@@ -357,15 +359,14 @@ function saveResult() {
                 <img src="/picture/Huaroa.jpg" alt="Logo Huaroa" style="height:110px; width:auto; max-width:40%; margin-bottom:10px; display:block;" />
                 <img src="/picture/kwang_logo3.png" alt="Kwang Logo" style="height:110px; width:auto; max-width:30%; margin-bottom:10px; display:block;" />
       </div>
-      <div style="font-family: 'Arial', sans-serif; color: #333;">
-        <div style="text-align: center; background: linear-gradient(135deg, #ebd09e 0%, #251f03 100%); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+         <div style="text-align: center; background: linear-gradient(135deg, #ebd09e 0%, #251f03 100%); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
         <h1 style="margin: 5px 0; font-size: 32px;">Espresso</h1>
         <p style="margin: 5px 0; font-size: 18px;">รายงานผลการประเมินกิจกรรมตัวเลข</p>
       </div>
-
-        <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
-          <p style="font-size: 14px; font-weight: bold; margin: 0 0 10px 0; color: #667eea;">ข้อมูลกิจกรรม</p>
+       <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+        <p style="font-size: 14px; font-weight: bold; margin: 0 0 10px 0; color: #251f03;">ข้อมูลกิจกรรม</p>
           <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+          
             <tr>
               <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">สัปดาห์ที่:</td>
               <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.week || '-'}</td>
@@ -382,13 +383,19 @@ function saveResult() {
               <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ครูผู้รับผิดชอบ:</td>
               <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.teacher || '-'}</td>
             </tr>
+             <tr>
+              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ผู้ทดสอบ:</td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.userName || '-'}</td>
+            </tr>
+        
           </table>
+        </div>
         </div>
       <div style="background: #f8f9fa; border: 3px solid #251f03; border-radius: 10px; padding: 20px; margin-bottom: 20px; text-align: center;">
           <p style="font-size: 16px; margin: 0 0 15px 0; color: #555;"><strong>คะแนนที่ได้รับ</strong></p>
           <p style="font-size: 28px; color:  #000000; font-weight: bold;">${correctAnswers}/${questions.length}</p>
         </div>
-        <div style="margin-top: 100px; text-align: center;">
+        <div style="margin-top: 60px; text-align: center;">
         <p style="margin: 0; font-size: 13px; color: #333;">ลงชื่อ _______________________</p>
         <p style="margin: 8px 0 0 0; font-size: 13px; color: #333;">ครูผู้รับผิดชอบ</p>
         <p style="margin: 8px 0 0 0; font-size: 13px; color: #333;">( _______________________ )</p>
