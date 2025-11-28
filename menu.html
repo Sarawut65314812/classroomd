@@ -662,6 +662,11 @@
     const introVideo = document.getElementById('introVideo');
     const introVideoContainer = document.getElementById('introVideoContainer');
 
+    // ตรวจสอบขนาดหน้าจอ
+    if (window.innerWidth <= 768) { // ขนาดหน้าจอมือถือ
+      introVideo.src = '/video/EspressoM.mp4';
+    }
+
     introVideo.addEventListener('ended', () => {
       introVideoContainer.style.display = 'none';
     });
