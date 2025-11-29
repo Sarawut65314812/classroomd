@@ -279,7 +279,7 @@ async function shareResult() {
       jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
     };
 
-    // Updated the PDF content to include the current date and time
+    // Updated the PDF content to include the userName
     const pdfContent = `
       <div style="font-family: 'Arial', sans-serif; color: #333;">
         <div style="text-align: center; margin-bottom: 12px;">
@@ -397,11 +397,7 @@ function saveResult() {
             <tr>
               <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ครูผู้รับผิดชอบ:</td>
               <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.teacher || '-'}</td>
-            </tr>
-             <tr>
-              <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ผู้ทดสอบ:</td>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.userName || '-'}</td>
-            </tr>
+            </tr>  
              <tr>
               <td style="padding: 8px; font-weight: bold; width: 30%; border-bottom: 1px solid #eee;">ผู้ทดสอบ:</td>
               <td style="padding: 8px; border-bottom: 1px solid #eee;">${teacherConfig.userName || '-'}</td>
@@ -490,7 +486,7 @@ function playSuccessSound() {
   } catch (e) {}
 }
 
-// Adjusted the draggable image positioning logic to shift the X-axis further to the right
+// สร้างรูปที่ลากได้
 function createDraggableImage(imgData, imageId, isCorrect) {
   if (createdImages[imageId]) return;
 
@@ -498,35 +494,45 @@ function createDraggableImage(imgData, imageId, isCorrect) {
   imageDiv.classList.add('image-item');
   imageDiv.innerHTML = `<img src="${imgData}" alt="Image">`;
 
-  // Calculate horizontal centering and shift further to the right
+  // วางรูปภาพเรียงกันเป็นแถวแนวนอนด้านล่าง ไม่ซ้อนกัน
   const estimatedImgW = 100;
-  const gap = 100;
-  const imagesPerRow = 6;
+  const estimatedImgH = 100;
+  const horizontalPadding = 24;
+  // นับจำนวนรูปที่สร้างแล้ว เพื่อจัดตำแหน่ง
   const totalImages = document.querySelectorAll('.image-item').length;
+  const imagesPerRow = 6; // ปรับจำนวนรูปต่อแถวได้
+  const gap = 100; // ระยะห่างระหว่างรูป (เพิ่มขึ้น)
+  const row = Math.floor(totalImages / imagesPerRow);
   const col = totalImages % imagesPerRow;
-
+  // คำนวณความกว้างรวมของแถว
   const rowWidth = imagesPerRow * estimatedImgW + (imagesPerRow - 1) * gap;
   const centerX = (window.innerWidth - rowWidth) / 2;
-  const startX = centerX + col * (estimatedImgW + gap) + centerX * 1.5; // Shift X-axis further to the right
-
-  // Center vertically and shift further downward
-  const centerY = window.innerHeight / 2 + 100; // Maintain Y-axis adjustment
-
+  const startX = centerX + col * (estimatedImgW + gap);
+  // วางรูปภาพให้อยู่กลางจอแนวตั้งเสมอ (centered vertically)
+  const totalRows = Math.ceil((document.querySelectorAll('.image-item').length + 1) / imagesPerRow);
+  const imagesAreaHeight = totalRows * estimatedImgH + (totalRows - 1) * gap;
+  // ขยับลงล่างอีก (เพิ่ม offset 80px)
+  const centerY = (window.innerHeight - imagesAreaHeight) / 2 + 80;
+  const startY = centerY + row * (estimatedImgH + gap);
+  // Disable random rotation: keep images upright but allow slight scale variation
+  const angle = 0;
+  const scale = 1 + Math.random() * 0.2;
   imageDiv.style.left = `${startX}px`;
-  imageDiv.style.top = `${centerY}px`;
-  imageDiv.style.transform = `scale(2.75)`;
+  imageDiv.style.top = `${startY}px`;
+  imageDiv.style.transform = `scale(${scale * 2.75})`;
 
   let offsetX, offsetY;
   function dragMove(posX, posY) {
     imageDiv.style.left = `${posX}px`;
     imageDiv.style.top = `${posY}px`;
     createParticle(posX + 50, posY + 50);
-    playDraggingSound();
+    playDraggingSound(); // เรียกใช้ฟังก์ชันเล่นเสียงตอนลาก
+    baseFreq = baseFreq >= 800 ? 200 : baseFreq + 50;
   }
 
-  // Desktop drag events
+  // Desktop
   imageDiv.addEventListener('mousedown', e => {
-    initAudio();
+    initAudio(); // เริ่มต้น AudioContext
     e.preventDefault();
     offsetX = e.clientX - imageDiv.offsetLeft;
     offsetY = e.clientY - imageDiv.offsetTop;
@@ -545,9 +551,9 @@ function createDraggableImage(imgData, imageId, isCorrect) {
     document.addEventListener('mouseup', onUp);
   });
 
-  // Mobile drag events
+  // Mobile
   imageDiv.addEventListener('touchstart', e => {
-    initAudio();
+    initAudio(); // เริ่มต้น AudioContext
     const t = e.touches[0];
     offsetX = t.clientX - imageDiv.offsetLeft;
     offsetY = t.clientY - imageDiv.offsetTop;
@@ -559,6 +565,41 @@ function createDraggableImage(imgData, imageId, isCorrect) {
   imageDiv.addEventListener('touchend', e => {
     checkDrop();
   });
+
+  // Updated the `checkDrop` function to prevent score increment for wrong images placed in the wrong zone
+  function checkDrop() {
+    const rect = imageDiv.getBoundingClientRect();
+    const correctZone = document.getElementById('correctZone').getBoundingClientRect();
+    const wrongZone = document.getElementById('wrongZone').getBoundingClientRect();
+
+    if (rect.left + rect.width / 2 > correctZone.left && rect.left + rect.width / 2 < correctZone.right &&
+        rect.top + rect.height / 2 > correctZone.top && rect.top + rect.height / 2 < correctZone.bottom) {
+      if (isCorrect) {
+        score += 1;
+        playSuccessSound(); // เล่นเสียงดีใจเมื่อถูก
+      } else {
+        score -= 1;
+        playFailSound(); // เล่นเสียงผิดเมื่อผิด
+      }
+      document.getElementById('score').innerText = score;
+      imageDiv.remove();
+      delete createdImages[imageId];
+      checkEndGame();
+    } else if (rect.left + rect.width / 2 > wrongZone.left && rect.left + rect.width / 2 < wrongZone.right &&
+               rect.top + rect.height / 2 > wrongZone.top && rect.top + rect.height / 2 < wrongZone.bottom) {
+      if (isCorrect) {
+        score -= 1;
+        playFailSound(); // เล่นเสียงผิดเมื่อผิด
+      } else {
+        // รูปผิดวางผิด zone (ไม่เพิ่ม/ลดคะแนน) แต่ให้เล่นเสียง winner ด้วย
+        playSuccessSound();
+      }
+      document.getElementById('score').innerText = score;
+      imageDiv.remove();
+      delete createdImages[imageId];
+      checkEndGame();
+    }
+  }
 
   document.body.appendChild(imageDiv);
   createdImages[imageId] = imageDiv;

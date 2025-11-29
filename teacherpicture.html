@@ -19,7 +19,8 @@
     <input id="topicInput" placeholder="สาระการเรียนรู้">
     <input id="unitInput" placeholder="หน่วยการเรียนรู้">
     <input id="teacherInput" placeholder="ครูผู้รับผิดชอบ">
-    
+    <input id="userNameInput" placeholder="ชื่อผู้ทดสอบ">
+
 
   </div>
 </div>
@@ -219,19 +220,23 @@ if(!savedConfig.date) {
   document.getElementById('dateInput').value = today;
 }
 
-// Updated saveConfig to include additional fields in the saved configuration
+// Updated saveConfig to include userName in the saved configuration
 function saveConfig() {
   const week = document.getElementById('weekInput')?.value.trim();
   const topic = document.getElementById('topicInput')?.value.trim();
   const unit = document.getElementById('unitInput')?.value.trim();
   const teacher = document.getElementById('teacherInput')?.value.trim();
   const mainTopic = document.getElementById('mainTopicInput')?.value.trim();
+  const userName = document.getElementById('userNameInput')?.value.trim();
+
   // Allow saving even when some fields are empty — use sensible defaults
   const cfgWeek = week || '-';
   const cfgTopic = topic || 'ไม่ระบุ';
   const cfgUnit = unit || '-';
   const cfgTeacher = teacher || 'ไม่ระบุ';
   const cfgMainTopic = mainTopic || 'ไม่ระบุ';
+  const cfgUserName = userName || 'ไม่ระบุ';
+
   if (correctImages.length === 0) console.warn('[SAVE CONFIG] saving with 0 correctImages');
   if (wrongImages.length === 0) console.warn('[SAVE CONFIG] saving with 0 wrongImages');
 
@@ -242,6 +247,7 @@ function saveConfig() {
     unit: cfgUnit,
     teacher: cfgTeacher,
     mainTopic: cfgMainTopic,
+    userName: cfgUserName,
     correctImages: correctImages || [],
     wrongImages: wrongImages || []
   };
@@ -257,6 +263,8 @@ function saveActivity() {
   const unit = document.getElementById('unitInput')?.value.trim();
   const teacher = document.getElementById('teacherInput')?.value.trim();
   const mainTopic = document.getElementById('mainTopicInput')?.value.trim();
+    const userName = document.getElementById('userNameInput').value.trim();
+
 
   // Allow partial data — apply defaults where missing
   const cfgWeek = week || '-';
@@ -433,6 +441,7 @@ function editActivity(activityId) {
   if(document.getElementById('unitInput')) document.getElementById('unitInput').value = config.unit || '';
   if(document.getElementById('teacherInput')) document.getElementById('teacherInput').value = config.teacher || '';
   if(document.getElementById('mainTopicInput')) document.getElementById('mainTopicInput').value = config.mainTopic || '';
+  if(document.getElementById('userNameInput')) document.getElementById('userNameInput').value = config.userName || '';        
   
   correctImages = config.correctImages || [];
   wrongImages = config.wrongImages || [];
