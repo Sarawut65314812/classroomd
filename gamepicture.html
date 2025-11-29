@@ -49,6 +49,38 @@ function playFailSound() {
     audio.play();
   } catch (e) {}
 }
+
+// เพิ่มฟังก์ชันเล่นเสียงตอนลาก
+function playDraggingSound() {
+  if (!soundEnabled || !audioCtx) return; // ตรวจสอบสถานะเสียงและ AudioContext
+
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(baseFreq, audioCtx.currentTime);
+  gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.2);
+
+  baseFreq = baseFreq >= 800 ? 200 : baseFreq + 50; // ปรับความถี่เสียง
+}
+
+// เพิ่มฟังก์ชัน initAudio เพื่อเริ่มต้น AudioContext
+function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const s = audioCtx.createBufferSource();
+    s.connect(audioCtx.destination);
+    s.start();
+  }
+}
+
 </script>
 <style>
   /* Override zone styling: larger touch targets and colored dashed borders */
@@ -491,28 +523,34 @@ function createDraggableImage(imgData, imageId, isCorrect) {
     imageDiv.style.left = `${posX}px`;
     imageDiv.style.top = `${posY}px`;
     createParticle(posX + 50, posY + 50);
+    playDraggingSound(); // เรียกใช้ฟังก์ชันเล่นเสียงตอนลาก
     baseFreq = baseFreq >= 800 ? 200 : baseFreq + 50;
   }
 
   // Desktop
   imageDiv.addEventListener('mousedown', e => {
+    initAudio(); // เริ่มต้น AudioContext
     e.preventDefault();
     offsetX = e.clientX - imageDiv.offsetLeft;
     offsetY = e.clientY - imageDiv.offsetTop;
+
     function onMove(e) {
       dragMove(e.clientX - offsetX, e.clientY - offsetY);
     }
+
     function onUp() {
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onUp);
       checkDrop();
     }
+
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup', onUp);
   });
 
   // Mobile
   imageDiv.addEventListener('touchstart', e => {
+    initAudio(); // เริ่มต้น AudioContext
     const t = e.touches[0];
     offsetX = t.clientX - imageDiv.offsetLeft;
     offsetY = t.clientY - imageDiv.offsetTop;
