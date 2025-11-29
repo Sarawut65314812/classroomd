@@ -1180,5 +1180,51 @@ function generatePDF() {
 <!-- Socket client (connect + heartbeat) -->
 <script src="/socket.io/socket.io.js"></script>
 <script src="/socket-client.js"></script>
+
+<!-- Sound toggle functionality -->
+<script>
+let soundEnabled = true; // ตัวแปรควบคุมสถานะเสียง
+
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+  const soundButton = document.getElementById('soundToggleButton');
+  soundButton.src = soundEnabled ? '/picture/open.png' : '/picture/close.png';
+}
+
+function playSuccessSound() {
+  if (!soundEnabled) return; // ตรวจสอบสถานะเสียงก่อนเล่น
+  try {
+    let audio = document.getElementById('winner-audio');
+    if (!audio) {
+      audio = document.createElement('audio');
+      audio.id = 'winner-audio';
+      audio.src = '/sound/winner.mp3';
+      audio.preload = 'auto';
+      document.body.appendChild(audio);
+    }
+    audio.currentTime = 0;
+    audio.play();
+  } catch (e) {}
+}
+
+function playFailSound() {
+  if (!soundEnabled) return; // ตรวจสอบสถานะเสียงก่อนเล่น
+  try {
+    let audio = document.getElementById('fail-audio');
+    if (!audio) {
+      audio = document.createElement('audio');
+      audio.id = 'fail-audio';
+      audio.src = '/sound/fail.mp3';
+      audio.preload = 'auto';
+      document.body.appendChild(audio);
+    }
+    audio.currentTime = 0;
+    audio.play();
+  } catch (e) {}
+}
+</script>
+
+<img id="soundToggleButton" onclick="toggleSound()" src="/picture/open.png" alt="Toggle Sound" style="position: fixed; top: 50px; right: 10px; z-index: 1000; width: 50px; height: 50px; cursor: pointer;">
+
 </body>
 </html>

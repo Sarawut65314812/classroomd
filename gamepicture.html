@@ -25,7 +25,7 @@ function playSuccessSound() {
     if (!audio) {
       audio = document.createElement('audio');
       audio.id = 'winner-audio';
-      audio.src = '/sound/winner.mp3';
+      audio.src = '/Sound/winner.mp3';
       audio.preload = 'auto';
       document.body.appendChild(audio);
     }
@@ -41,7 +41,7 @@ function playFailSound() {
     if (!audio) {
       audio = document.createElement('audio');
       audio.id = 'fail-audio';
-      audio.src = '/sound/fail.mp3';
+      audio.src = '/Sound/fail.mp3';
       audio.preload = 'auto';
       document.body.appendChild(audio);
     }
@@ -96,7 +96,7 @@ function playFailSound() {
     color: #000000;
     border: 6px solid #74640a;
     border-radius: 9999px;
-    box-shadow: 1px 1px 0 #000, -4px 3px #3b3305, 0 0 10px rgba(255,230,160,0.45);
+    box-shadow: 1px 1px 0 #000, -4px 3px #3b3305, 0 0 10px rgba(255, 0, 0, 0.45); /* Changed neon color */
     font-weight: 700;
     font-size: clamp(0.9rem, 1.2vw, 1.1rem);
     text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3), 0 -1px 0 rgba(0, 0, 0, 0.1);
@@ -442,7 +442,7 @@ function playSuccessSound() {
     if (!audio) {
       audio = document.createElement('audio');
       audio.id = 'winner-audio';
-      audio.src = '/sound/winner.mp3';
+      audio.src = '/Sound/winner.mp3';
       audio.preload = 'auto';
       document.body.appendChild(audio);
     }
