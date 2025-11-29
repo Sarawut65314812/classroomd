@@ -1190,6 +1190,15 @@ function toggleSound() {
   soundEnabled = !soundEnabled;
   const soundButton = document.getElementById('soundToggleButton');
   soundButton.src = soundEnabled ? '/picture/open.png' : '/picture/close.png';
+
+  // Update dragging sound toggle
+  if (!soundEnabled && audioCtx) {
+    audioCtx.suspend(); // Suspend the AudioContext to stop sounds
+  } else if (soundEnabled && audioCtx) {
+    audioCtx.resume(); // Resume the AudioContext to enable sounds
+  } else if (soundEnabled && !audioCtx) {
+    initAudio(); // Initialize AudioContext if not already created
+  }
 }
 
 function playSuccessSound() {
