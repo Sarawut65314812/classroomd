@@ -107,14 +107,17 @@ function handleImageUpload(event, type) {
 function autoCropToSquare(img) {
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
-  
+
   // กำหนดขนาดสูงสุด
   const maxSize = 300;
   let width = img.width;
   let height = img.height;
-  
-  // ปรับขนาดถ้ารูปใหญ่เกินไป โดยรักษาสัดส่วน
-  if (width > maxSize || height > maxSize) {
+
+  // ตรวจสอบว่ากำลังใช้งานบนมือถือหรือไม่
+  const isMobile = window.innerWidth <= 768;
+
+  // ปรับขนาดถ้ารูปใหญ่เกินไป โดยรักษาสัดส่วน (ยกเว้นในมือถือ)
+  if (!isMobile && (width > maxSize || height > maxSize)) {
     if (width > height) {
       height = (height / width) * maxSize;
       width = maxSize;
@@ -123,17 +126,17 @@ function autoCropToSquare(img) {
       height = maxSize;
     }
   }
-  
+
   canvas.width = width;
   canvas.height = height;
-  
+
   // วาดรูปลงบน canvas
   ctx.drawImage(img, 0, 0, width, height);
-  
+
   // ตัดพื้นหลัง
   const imageData = ctx.getImageData(0, 0, width, height);
   const data = imageData.data;
-  
+
   // หาสีพื้นหลัง (ใช้สีมุม 4 มุม)
   const corners = [
     [0, 0], // มุมซ้ายบน
@@ -141,7 +144,7 @@ function autoCropToSquare(img) {
     [0, height - 1], // มุมซ้ายล่าง
     [width - 1, height - 1] // มุมขวาล่าง
   ];
-  
+
   let bgColor = null;
   for (let corner of corners) {
     const x = corner[0];
@@ -150,13 +153,13 @@ function autoCropToSquare(img) {
     const r = data[index];
     const g = data[index + 1];
     const b = data[index + 2];
-    
+
     if (r > 200 && g > 200 && b > 200) { // สีขาวหรือใกล้เคียง
       bgColor = { r, g, b };
       break;
     }
   }
-  
+
   // ตัดพื้นหลังออก (ถ้าเจอสีพื้นหลัง)
   if (bgColor) {
     const threshold = 40; // ค่าความต่างของสี
@@ -164,18 +167,20 @@ function autoCropToSquare(img) {
       const r = data[i];
       const g = data[i + 1];
       const b = data[i + 2];
-      
+
       // ถ้าสีใกล้เคียงกับพื้นหลัง ให้โปร่งใส
-      if (Math.abs(r - bgColor.r) < threshold && 
-          Math.abs(g - bgColor.g) < threshold && 
-          Math.abs(b - bgColor.b) < threshold) {
+      if (
+        Math.abs(r - bgColor.r) < threshold &&
+        Math.abs(g - bgColor.g) < threshold &&
+        Math.abs(b - bgColor.b) < threshold
+      ) {
         data[i + 3] = 0; // ทำให้โปร่งใส
       }
     }
-    
+
     ctx.putImageData(imageData, 0, 0);
   }
-  
+
   // แปลงเป็น base64 (ใช้ PNG เพื่อรักษาความโปร่งใส)
   return canvas.toDataURL('image/png', 0.9);
 }

@@ -429,7 +429,7 @@
         .video-wrap {
           width: 100%;
           display: flex;
-          justify-content: center;
+          justify-content: center; /* Center videos as requested */
           align-items: center;
           padding: 0 1rem;
           box-sizing: border-box;
@@ -666,7 +666,6 @@
   <script>
     const introVideo = document.getElementById('introVideo');
     const introVideoContainer = document.getElementById('introVideoContainer');
-
     // ตรวจสอบขนาดหน้าจอ
     if (window.innerWidth <= 768) { // ขนาดหน้าจอมือถือ
       introVideo.src = '/video/EspressoM.mp4';

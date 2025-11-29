@@ -319,7 +319,7 @@ async function shareResult() {
           <p style="font-size: 16px; margin: 0 0 15px 0; color: #555;"><strong>คะแนนที่ได้รับ</strong></p>
           <p style="font-size: 28px; color: #27ae60; font-weight: bold;">${score}/${teacherConfig.correctImages?.length || 0}</p>
         </div>
-        <div style="margin-top: 300px; text-align: center;">
+        <div style="margin-top: 50px; text-align: center;">
           <p style="margin: 0; font-size: 13px; color: #333;">ลงชื่อ _______________________</p>
           <p style="margin: 8px 0 0 0; font-size: 13px; color: #333;">ครูผู้รับผิดชอบ</p>
           <p style="margin: 5px 0 0 0; font-size: 13px; color: #333;">( _______________________ )</p>
@@ -413,7 +413,7 @@ function saveResult() {
         <p style="margin: 8px 0 0 0; font-size: 13px; color: #333;">ครูผู้รับผิดชอบ</p>
         <p style="margin: 8px 0 0 0; font-size: 13px; color: #333;">( _______________________ )</p>
       </div>
-       <div id="companyContactWrapper" style="font-size: 14px; color: #333; text-align: right; line-height:1.1; margin-top: 80px;">
+       <div id="companyContactWrapper" style="font-size: 14px; color: #333; text-align: right; line-height:1.1; margin-top: 50px;">
       <div style="display: inline-block; text-align: right;">
         บริษัท กว้างไม่ จำกัด<br>
         263/1 ต.หัวรอ อ.เมือง จ.พิษณุโลก 65000<br>
@@ -506,17 +506,18 @@ function createDraggableImage(imgData, imageId, isCorrect) {
   const col = totalImages % imagesPerRow;
   // คำนวณความกว้างรวมของแถว
   const rowWidth = imagesPerRow * estimatedImgW + (imagesPerRow - 1) * gap;
-  const centerX = (window.innerWidth - rowWidth) / 2;
+  const centerX = Math.max((window.innerWidth - rowWidth) / 2, 0); // ป้องกันล้นขอบซ้ายขวา
   const startX = centerX + col * (estimatedImgW + gap);
   // วางรูปภาพให้อยู่กลางจอแนวตั้งเสมอ (centered vertically)
   const totalRows = Math.ceil((document.querySelectorAll('.image-item').length + 1) / imagesPerRow);
   const imagesAreaHeight = totalRows * estimatedImgH + (totalRows - 1) * gap;
   // ขยับลงล่างอีก (เพิ่ม offset 80px)
-  const centerY = (window.innerHeight - imagesAreaHeight) / 2 + 80;
+  const centerY = Math.max((window.innerHeight - imagesAreaHeight) / 2 + 80, 0); // ป้องกันล้นขอบบนล่าง
   const startY = centerY + row * (estimatedImgH + gap);
-  // Disable random rotation: keep images upright but allow slight scale variation
+  // Disable random rotation: keep images upright and prevent scaling on mobile
   const angle = 0;
-  const scale = 1 + Math.random() * 0.2;
+  const isMobile = window.innerWidth <= 768;
+  const scale = isMobile ? 1 : 1 + Math.random() * 0.2;
   imageDiv.style.left = `${startX}px`;
   imageDiv.style.top = `${startY}px`;
   imageDiv.style.transform = `scale(${scale * 2.75})`;
@@ -602,7 +603,7 @@ function createDraggableImage(imgData, imageId, isCorrect) {
   }
 
   document.body.appendChild(imageDiv);
-  createdImages[imageId] = imageDiv;
+  createdImages[imageId] = true;
 }
 
 // Function to check if the game has ended and show the popup
