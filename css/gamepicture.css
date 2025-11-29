@@ -77,6 +77,12 @@ button {
   color: #333; 
 }
 
+/* Adjust image alignment to center horizontally */
+#zones .zone img {
+  display: block;
+  margin: 0 auto; /* Center image horizontally */
+}
+
 #scorePopup {
   display:none;
   position:fixed;

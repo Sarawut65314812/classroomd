@@ -178,6 +178,14 @@ body::before {
   50% { transform: scale(1.2); opacity: 1; }
   100% { transform: scale(1); opacity: 1; }
 }
+
+@media (max-width: 768px) {
+  #soundToggleButton {
+    right: 20px !important; /* Ensure the rule is applied */
+    top: 25px !important; /* Adjust top position for better alignment */
+
+  }
+}
 </style>
 </head>
 <body>
@@ -1236,7 +1244,7 @@ function playFailSound() {
 }
 </script>
 
-<img id="soundToggleButton" onclick="toggleSound()" src="/picture/open.png" alt="Toggle Sound" style="position: fixed; top: 50px; right: 10px; z-index: 1000; width: 50px; height: 50px; cursor: pointer;">
+<img id="soundToggleButton" onclick="toggleSound()" src="/picture/open.png" alt="Toggle Sound" style="position: fixed; top: 15px; right: 50px; z-index: 1000; width: 50px; height: 50px; cursor: pointer;">
 
 </body>
 </html>

@@ -19,7 +19,8 @@
     <input id="topicInput" placeholder="สาระการเรียนรู้">
     <input id="unitInput" placeholder="หน่วยการเรียนรู้">
     <input id="teacherInput" placeholder="ครูผู้รับผิดชอบ">
-    <input id="userNameInput" placeholder="ชื่อผู้ทดสอบ">
+    
+
   </div>
 </div>
 
@@ -220,7 +221,6 @@ if(!savedConfig.date) {
 
 // Updated saveConfig to include additional fields in the saved configuration
 function saveConfig() {
-  const userName = document.getElementById('userNameInput')?.value.trim();
   const week = document.getElementById('weekInput')?.value.trim();
   const topic = document.getElementById('topicInput')?.value.trim();
   const unit = document.getElementById('unitInput')?.value.trim();
@@ -232,13 +232,11 @@ function saveConfig() {
   const cfgUnit = unit || '-';
   const cfgTeacher = teacher || 'ไม่ระบุ';
   const cfgMainTopic = mainTopic || 'ไม่ระบุ';
-  
   if (correctImages.length === 0) console.warn('[SAVE CONFIG] saving with 0 correctImages');
   if (wrongImages.length === 0) console.warn('[SAVE CONFIG] saving with 0 wrongImages');
 
   // Save config (accept empty image lists)
   const config = {
-    userName: userName,
     week: cfgWeek,
     topic: cfgTopic,
     unit: cfgUnit,
@@ -254,13 +252,11 @@ function saveConfig() {
 
 // ฟังก์ชันบันทึกกิจกรรม
 function saveActivity() {
-  const userName = document.getElementById('userNameInput')?.value.trim();
   const week = document.getElementById('weekInput')?.value.trim();
   const topic = document.getElementById('topicInput')?.value.trim();
   const unit = document.getElementById('unitInput')?.value.trim();
   const teacher = document.getElementById('teacherInput')?.value.trim();
   const mainTopic = document.getElementById('mainTopicInput')?.value.trim();
-  // ...rest of saveActivity unchanged...
 
   // Allow partial data — apply defaults where missing
   const cfgWeek = week || '-';
@@ -280,7 +276,6 @@ function saveActivity() {
     if (activity) {
       // อัพเดตข้อมูลกิจกรรมเดิม
       activity.config = {
-        userName: userName,
         week: week,
         topic: topic,
         unit: unit,
@@ -306,7 +301,9 @@ function saveActivity() {
   
   // บันทึกกิจกรรมใหม่
   const activityName = prompt('ตั้งชื่อกิจกรรม:', `${cfgMainTopic} - สัปดาห์ ${cfgWeek}`);
+  
   if (!activityName) return;
+  
   const activity = {
     id: Date.now(),
     name: activityName,
@@ -314,7 +311,6 @@ function saveActivity() {
     topic: cfgTopic,
     mainTopic: cfgMainTopic,
     config: {
-      userName: userName,
       week: cfgWeek,
       topic: cfgTopic,
       unit: cfgUnit,
@@ -326,30 +322,51 @@ function saveActivity() {
     savedAt: new Date().toISOString(),
     savedAtDisplay: new Date().toLocaleString('th-TH')
   };
+  
   savedActivities.push(activity);
   localStorage.setItem('savedActivities', JSON.stringify(savedActivities));
-  alert(`✅ บันทึกกิจกรรม "${activity.name}" สำเร็จ!`);
   
-  document.getElementById('activityModal').style.display = 'flex';
+  alert(`✅ บันทึกกิจกรรม "${activityName}" สำเร็จ!`);
+}
 
-// ฟังก์ชันโหลดกิจกรรม (แสดง modal รายการกิจกรรมที่บันทึกไว้)
+// ฟังก์ชันโหลดกิจกรรม
 function loadActivity() {
   const savedActivities = JSON.parse(localStorage.getItem('savedActivities') || '[]');
-  const activityList = document.getElementById('activityList');
-  if (savedActivities.length === 0) {
-    activityList.innerHTML = '<p>ยังไม่มีกิจกรรมที่บันทึกไว้</p>';
-    document.getElementById('activityModal').style.display = 'flex';
+  const pictureActivities = savedActivities.filter(a => a.type === 'picture');
+  
+  if (pictureActivities.length === 0) {
+    alert('ยังไม่มีกิจกรรมที่บันทึกไว้');
     return;
   }
-  activityList.innerHTML = savedActivities.map(activity => `
-    <div style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; margin-bottom: 10px;">
-      <h3 style="cursor: pointer; color: #3498db; text-decoration: underline;" onclick="playActivity(${activity.id})">${activity.name}</h3>
-      <p>สาระ: ${activity.topic}</p>
-      <p>สัปดาห์ที่: ${activity.config.week}</p>
+  
+  const activityList = document.getElementById('activityList');
+    activityList.innerHTML = pictureActivities.map(activity => `
+    <div style="background: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; border: 3px solid #74640a; transition: transform 0.2s;" 
+         onmouseover="this.style.transform='scale(1.02)'"
+         onmouseout="this.style.transform='scale(1)'">
+      <div style="display: flex; justify-content: space-between; align-items: start;">
+        <div style="flex: 1; cursor: pointer;" onclick="playActivity(${activity.id})">
+          <h3 style="margin: 0 0 8px 0; color: #333; font-size: 18px;">🖼️ ${activity.name}</h3>
+          <p style="margin: 4px 0; color: #666; font-size: 14px;">สาระ: ${activity.topic}</p>
+          <p style="margin: 4px 0; color: #666; font-size: 14px;">หัวข้อ: ${activity.mainTopic || '-'}</p>
+          <p style="margin: 4px 0; color: #999; font-size: 12px;">บันทึก: ${activity.savedAtDisplay}</p>
+          <p style="margin: 4px 0; color: #667eea; font-size: 14px; font-weight: 600;">รูปถูก: ${activity.config.correctImages?.length || 0} / รูปผิด: ${activity.config.wrongImages?.length || 0}</p>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button onclick="event.stopPropagation(); editActivity(${activity.id})" 
+                  style="background: #3498db; color: white; border: none; border-radius: 50%; width: 35px; height: 35px; cursor: pointer; font-size: 18px;">
+            ✏️
+          </button>
+          <button onclick="event.stopPropagation(); deleteActivity(${activity.id})" 
+                  style="background: #e74c3c; color: white; border: none; border-radius: 50%; width: 35px; height: 35px; cursor: pointer; font-size: 18px;">
+            🗑️
+          </button>
+        </div>
+      </div>
     </div>
   `).join('');
+  
   document.getElementById('activityModal').style.display = 'flex';
-}
 }
 
 // เลือกกิจกรรม
