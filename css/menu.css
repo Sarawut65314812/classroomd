@@ -315,6 +315,10 @@ body {
     font-size: 0.7rem;
   }
   
+  .hero-video {
+    margin: 0 auto;
+  }
+  
   .whitespace-nowrap {
     white-space: nowrap !important;
     overflow: hidden;
