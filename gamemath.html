@@ -121,29 +121,34 @@ body::before {
   box-shadow:0 0 15px rgba(0,0,0,0.5);
 }
 
-/* Neon Button Style */
-.neon-btn {
-  background: linear-gradient(180deg, #f8f6f0 0%, #fffef8 45%, #fff8e8 55%, #f5f0e5 100%);
-  color: #000000;
-  border: 6px solid #74640a;
-  border-radius: 9999px;
-  box-shadow: 1px 1px 0 #000, -8px 6px #3b3305, 0 0 20px rgba(255,230,160,0.55);
-  font-weight: 700;
-  font-size: clamp(1rem, 2vw, 1.5rem);
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3), 0 -1px 0 rgba(0, 0, 0, 0.1);
-  position: relative;
-  padding: clamp(14px, 2.5vw, 20px) clamp(35px, 5vw, 50px);
-  transform: translateZ(0);
-  transition: all 0.3s ease;
-  z-index: 10;
-  min-height: 55px;
-  cursor: pointer;
-}
+/* neon-btn: center text, auto width, neon border, responsive */
+  /* neon-btn: center text, auto width, neon border, responsive */
+  .neon-btn {
+    background: linear-gradient(180deg, #f8f6f0 0%, #fffef8 45%, #fff8e8 55%, #f5f0e5 100%);
+    color: #000000;
+    border: 6px solid #74640a;
+    border-radius: 9999px;
+    box-shadow: 1px 1px 0 #000, -4px 3px #3b3305, 0 0 10px rgba(255, 0, 0, 0.45); /* Changed neon color */
+    font-weight: 700;
+    font-size: clamp(0.9rem, 1.2vw, 1.1rem);
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3), 0 -1px 0 rgba(0, 0, 0, 0.1);
+    position: relative;
+    padding: 6px 16px;
+    transform: translateZ(0);
+    transition: all 0.3s ease;
+    z-index: 10;
+    min-height: 32px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+    margin-right: auto;
+    width: fit-content;
+    text-align: center;
+  }
 
-.neon-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 2px 2px 0 #000, -10px 8px #3b3305, 0 0 25px rgba(255,230,160,0.75);
-}
+
 
 #scorePopup button { font-size: 18px; padding: 6px 12px; margin-top: 10px; cursor: pointer; }
 
@@ -181,8 +186,7 @@ body::before {
 <div id="feedbackOverlay">
   <div id="feedbackMessage"></div>
 </div>
-
-<h2>สาระการเรียนรู้: <span id="topicName"></span></h2>
+<h2 class="neon-btn">สาระการเรียนรู้: <span id="topicName"></span></h2>
   <p id="scoreDisplay">Score: <span id="score">0</span></p>
 
 <div id="gameContainer">
@@ -716,10 +720,7 @@ function saveResult() {
     // เพิ่มชื่อผู้ทดสอบไปที่ล่างสุดของตาราง
     activityInfoTable.appendChild(userNameRow);
 
-    const element = document.createElement('div');
-    element.innerHTML = pdfContent;
-
-    html2pdf().set(opt).from(element).save();
+    html2pdf().set(opt).from(pdfContent).save();
   } catch (error) {
     console.error('Error saving PDF:', error);
   }
