@@ -9,8 +9,17 @@
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/gamepicture.css">
 <script>
+let soundEnabled = true; // ตัวแปรควบคุมสถานะเสียง
+
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+  const soundButton = document.getElementById('soundToggleButton');
+  soundButton.src = soundEnabled ? '/picture/open.png' : '/picture/close.png';
+}
+
 // ฟังก์ชันเล่นเสียงดีใจจากไฟล์ winner.mp3
 function playSuccessSound() {
+  if (!soundEnabled) return; // ตรวจสอบสถานะเสียงก่อนเล่น
   try {
     let audio = document.getElementById('winner-audio');
     if (!audio) {
@@ -26,6 +35,7 @@ function playSuccessSound() {
 }
 // ฟังก์ชันเล่นเสียงผิดจากไฟล์ fail.mp3
 function playFailSound() {
+  if (!soundEnabled) return; // ตรวจสอบสถานะเสียงก่อนเล่น
   try {
     let audio = document.getElementById('fail-audio');
     if (!audio) {
@@ -405,7 +415,7 @@ function initGame() {
   document.getElementById('score').innerText = score;
 
   // จำกัดจำนวนรูปที่แสดง (ถ้ามีรูปเยอะก็สุ่ม 5 รูป)
-  const maxImages = 5;
+  const maxImages = 10;
   
   // สุ่มรูปที่ถูกต้อง
   let correctImagesPool = [...teacherConfig.correctImages];
@@ -426,6 +436,7 @@ function initGame() {
 
 // ฟังก์ชันเล่นเสียงดีใจจากไฟล์ winner.mp3
 function playSuccessSound() {
+  if (!soundEnabled) return; // ตรวจสอบสถานะเสียงก่อนเล่น
   try {
     let audio = document.getElementById('winner-audio');
     if (!audio) {
@@ -734,5 +745,6 @@ window.onload = function() {
 <!-- Socket client (connect + heartbeat) -->
 <script src="/socket.io/socket.io.js"></script>
 <script src="/socket-client.js"></script>
+<img id="soundToggleButton" onclick="toggleSound()" src="/picture/open.png" alt="Toggle Sound" style="position: fixed; top: 25px; right: 50px; z-index: 1000; width: 50px; height: 50px; cursor: pointer;">
 </body>
 </html>
