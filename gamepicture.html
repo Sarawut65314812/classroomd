@@ -9,48 +9,55 @@
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/gamepicture.css">
 <script>
+// ปรับปรุงการเริ่มต้น AudioContext ให้รองรับมือถือ
+let audioCtx;
 let soundEnabled = true; // ตัวแปรควบคุมสถานะเสียง
+
+function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+}
+
+document.addEventListener('click', () => {
+  initAudio(); // เริ่มต้น AudioContext เมื่อผู้ใช้คลิก
+});
 
 function toggleSound() {
   soundEnabled = !soundEnabled;
   const soundButton = document.getElementById('soundToggleButton');
   soundButton.src = soundEnabled ? '/picture/open.png' : '/picture/close.png';
+
+  // ควบคุมสถานะของ AudioContext
+  if (!soundEnabled && audioCtx) {
+    audioCtx.suspend(); // หยุด AudioContext
+  } else if (soundEnabled && audioCtx) {
+    audioCtx.resume(); // เริ่ม AudioContext ใหม่
+  }
 }
 
-// ฟังก์ชันเล่นเสียงดีใจจากไฟล์ winner.mp3
+function playSound(src) {
+  if (!soundEnabled) return; // ตรวจสอบสถานะเสียงก่อนเล่น
+
+  try {
+    const audio = new Audio(src);
+    audio.play().catch(error => {
+      console.error('Error playing sound:', error);
+    });
+  } catch (error) {
+    console.error('Playback failed:', error);
+  }
+}
+
 function playSuccessSound() {
-  if (!soundEnabled) return; // ตรวจสอบสถานะเสียงก่อนเล่น
-  try {
-    let audio = document.getElementById('winner-audio');
-    if (!audio) {
-      audio = document.createElement('audio');
-      audio.id = 'winner-audio';
-      audio.src = '/Sound/winner.mp3';
-      audio.preload = 'auto';
-      document.body.appendChild(audio);
-    }
-    audio.currentTime = 0;
-    audio.play();
-  } catch (e) {}
-}
-// ฟังก์ชันเล่นเสียงผิดจากไฟล์ fail.mp3
-function playFailSound() {
-  if (!soundEnabled) return; // ตรวจสอบสถานะเสียงก่อนเล่น
-  try {
-    let audio = document.getElementById('fail-audio');
-    if (!audio) {
-      audio = document.createElement('audio');
-      audio.id = 'fail-audio';
-      audio.src = '/Sound/fail.mp3';
-      audio.preload = 'auto';
-      document.body.appendChild(audio);
-    }
-    audio.currentTime = 0;
-    audio.play();
-  } catch (e) {}
+  playSound('/sound/winner.mp3');
 }
 
-// เพิ่มฟังก์ชันเล่นเสียงตอนลาก
+function playFailSound() {
+  playSound('/sound/fail.mp3');
+}
+
+// ฟังก์ชันเล่นเสียงตอนลาก
 function playDraggingSound() {
   if (!soundEnabled || !audioCtx) return; // ตรวจสอบสถานะเสียงและ AudioContext
 
@@ -467,23 +474,6 @@ function initGame() {
   selectedWrongImages.forEach((imgData, index) => {
     createDraggableImage(imgData, `wrong-${index}`, false);
   });
-}
-
-// ฟังก์ชันเล่นเสียงดีใจจากไฟล์ winner.mp3
-function playSuccessSound() {
-  if (!soundEnabled) return; // ตรวจสอบสถานะเสียงก่อนเล่น
-  try {
-    let audio = document.getElementById('winner-audio');
-    if (!audio) {
-      audio = document.createElement('audio');
-      audio.id = 'winner-audio';
-      audio.src = '/Sound/winner.mp3';
-      audio.preload = 'auto';
-      document.body.appendChild(audio);
-    }
-    audio.currentTime = 0;
-    audio.play();
-  } catch (e) {}
 }
 
 // สร้างรูปที่ลากได้
