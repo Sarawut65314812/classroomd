@@ -693,6 +693,31 @@
   </script>
 
 <script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const introVideoContainer = document.getElementById("introVideoContainer");
+    const introVideo = document.getElementById("introVideo");
+
+    // Check if the video has already been played
+    const hasPlayedIntro = localStorage.getItem("hasPlayedIntro");
+
+    if (!hasPlayedIntro) {
+      // Show the video container and play the video
+      introVideoContainer.style.display = "flex";
+      introVideo.play();
+
+      // When the video ends, hide the container and set the flag in localStorage
+      introVideo.onended = function () {
+        introVideoContainer.style.display = "none";
+        localStorage.setItem("hasPlayedIntro", "true");
+      };
+    } else {
+      // Hide the video container if the video has already been played
+      introVideoContainer.style.display = "none";
+    }
+  });
+</script>
+
+<script>
 (function(_0xd9b){console.log('Welcome To New ERA! Kwang Unlimit LTD.');const _0x1a2b=document.querySelectorAll('.scroll-reveal');let _0x3c4d=null;_0x1a2b.forEach(_0x5e=>_0x5e.classList.remove('visible'));_0x3c4d=new IntersectionObserver(_0x6f7a=>{_0x6f7a.forEach(_0x8b9c=>{if(_0x8b9c.isIntersecting){_0x8b9c.target.classList.add('visible');}});},{threshold:0.15});_0x1a2b.forEach(_0xad=>_0x3c4d.observe(_0xad));window.addEventListener('beforeunload',()=>{if(_0x3c4d){_0x3c4d.disconnect();_0x3c4d=null;}});})();
 </script>
 
