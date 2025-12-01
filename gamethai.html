@@ -469,6 +469,10 @@ function playFailSound() {
 
 <img id="soundToggleButton" onclick="toggleSound()" src="/picture/open.png" alt="Toggle Sound" style="position: fixed; top: 50px; right: 10px; z-index: 1000; width: 50px; height: 50px; cursor: pointer;">
 
+<script>
+  try { localStorage.setItem('lastVisitedPage', location.pathname + location.search + location.hash); } catch(e){}
+</script>
+
 <!-- Socket client (connect + heartbeat) -->
 <script src="/socket.io/socket.io.js"></script>
 <script src="/socket-client.js"></script>

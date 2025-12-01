@@ -788,5 +788,10 @@ window.onload = function() {
 <script src="/socket.io/socket.io.js"></script>
 <script src="/socket-client.js"></script>
 <img id="soundToggleButton" onclick="toggleSound()" src="/picture/open.png" alt="Toggle Sound" style="position: fixed; top: 25px; right: 50px; z-index: 1000; width: 50px; height: 50px; cursor: pointer;">
+<script>
+  try {
+    localStorage.setItem('lastVisitedPage', location.pathname + location.search + location.hash);
+  } catch (e) { }
+</script>
 </body>
 </html>

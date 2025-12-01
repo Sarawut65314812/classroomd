@@ -1237,5 +1237,11 @@ function toggleSound() {
 
 <img id="soundToggleButton" onclick="toggleSound()" src="/picture/open.png" alt="Toggle Sound" style="position: fixed; top: 15px; right: 50px; z-index: 1000; width: 50px; height: 50px; cursor: pointer;">
 
+<script>
+  try {
+    localStorage.setItem('lastVisitedPage', location.pathname + location.search + location.hash);
+  } catch (e) { /* ignore */ }
+</script>
+
 </body>
 </html>

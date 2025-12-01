@@ -127,5 +127,8 @@ document.getElementById('feedbackModal')?.addEventListener('click', function(e) 
 <!-- Socket client (connect + heartbeat) -->
 <script src="/socket.io/socket.io.js"></script>
 <script src="/socket-client.js"></script>
+<script>
+  try { localStorage.setItem('lastVisitedPage', location.pathname + location.search + location.hash); } catch(e){}
+</script>
 </body>
 </html>
