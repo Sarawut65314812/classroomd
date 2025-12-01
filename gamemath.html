@@ -241,6 +241,7 @@ body::before {
 
 <script>
 let audioCtx, baseFreq = 200;
+let soundEnabled = true; // global sound toggle (used by audio helpers)
 const sparkleChars = ['✨', '🌟', '💫', '⭐'];
 let createdAnswers = {};
 let score = 0;
@@ -349,17 +350,41 @@ function showFeedback(isCorrect) {
 }
 
 // เสียงถูกต้อง (winner)
-function playWinnerSound() {
-  const audio = new Audio('/Sound/winner.mp3');
-  audio.volume = 0.5;
-  audio.play();
+// Unified audio helper: creates/caches audio elements and plays them
+const _audioCache = {};
+function _getAudioElement(key, srcs = []) {
+  if (_audioCache[key]) return _audioCache[key];
+  const audio = document.createElement('audio');
+  audio.preload = 'auto';
+  // prefer first provided src, but keep list for reference
+  if (srcs && srcs.length > 0) audio.src = srcs[0];
+  audio.style.display = 'none';
+  document.body.appendChild(audio);
+  _audioCache[key] = audio;
+  return audio;
 }
 
-// เสียงผิด (fail)
+function playAudio(key, srcs = [], volume = 0.5) {
+  if (typeof soundEnabled !== 'undefined' && !soundEnabled) return;
+  try {
+    const audio = _getAudioElement(key, srcs);
+    if (!audio.src && srcs && srcs.length > 0) audio.src = srcs[0];
+    audio.volume = volume;
+    audio.currentTime = 0;
+    const p = audio.play();
+    if (p && typeof p.then === 'function') p.catch(() => {});
+  } catch (e) {
+    console.warn('playAudio error', e);
+  }
+}
+
+function playWinnerSound() {
+  // try common paths (case variations) to be resilient
+  playAudio('winner', ['/Sound/winner.mp3', '/sound/winner.mp3'], 0.5);
+}
+
 function playFailSound() {
-  const audio = new Audio('/Sound/fail.mp3'); // short fail sound
-  audio.volume = 0.5;
-  audio.play();
+  playAudio('fail', ['/Sound/fail.mp3', '/sound/fail.mp3'], 0.5);
 }
 
 
@@ -1192,12 +1217,10 @@ function generatePDF() {
 
 <!-- Sound toggle functionality -->
 <script>
-let soundEnabled = true; // ตัวแปรควบคุมสถานะเสียง
-
 function toggleSound() {
   soundEnabled = !soundEnabled;
   const soundButton = document.getElementById('soundToggleButton');
-  soundButton.src = soundEnabled ? '/picture/open.png' : '/picture/close.png';
+  if (soundButton) soundButton.src = soundEnabled ? '/picture/open.png' : '/picture/close.png';
 
   // Control all sounds
   if (!soundEnabled) {
@@ -1209,38 +1232,6 @@ function toggleSound() {
       initAudio(); // Initialize AudioContext if not already created
     }
   }
-}
-
-function playSuccessSound() {
-  if (!soundEnabled) return; // ตรวจสอบสถานะเสียงก่อนเล่น
-  try {
-    let audio = document.getElementById('winner-audio');
-    if (!audio) {
-      audio = document.createElement('audio');
-      audio.id = 'winner-audio';
-      audio.src = '/sound/winner.mp3';
-      audio.preload = 'auto';
-      document.body.appendChild(audio);
-    }
-    audio.currentTime = 0;
-    audio.play();
-  } catch (e) {}
-}
-
-function playFailSound() {
-  if (!soundEnabled) return; // ตรวจสอบสถานะเสียงก่อนเล่น
-  try {
-    let audio = document.getElementById('fail-audio');
-    if (!audio) {
-      audio = document.createElement('audio');
-      audio.id = 'fail-audio';
-      audio.src = '/sound/fail.mp3';
-      audio.preload = 'auto';
-      document.body.appendChild(audio);
-    }
-    audio.currentTime = 0;
-    audio.play();
-  } catch (e) {}
 }
 </script>
 
