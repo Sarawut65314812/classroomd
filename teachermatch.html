@@ -315,12 +315,32 @@ button { cursor:pointer; }
 .info-section h2 {
   margin-top: 0;
 }
+
+/* Global version badge: fixed bottom-right on the viewport */
+.Version {
+  position: fixed;
+  right: 12px;
+  bottom: 10px;
+  font-family: 'Roboto', Helvetica, Arial, sans-serif;
+  font-weight: 300;
+  font-size: clamp(0.7rem, 0.9vw, 0.9rem);
+  color: #8a8f93;
+  background: transparent;
+  opacity: 0.95;
+  padding: 6px 8px;
+  border-radius: 6px;
+  z-index: 2147483647;
+  pointer-events: none;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.08);
+}
 </style>
 </head>
 <body>
 
 <div class="info-section">
   <h1>กิจกรรมเลข</h1>
+  
+  
   <h3>กรอกข้อมูลกิจกรรม</h3>
   
   <div class="info-inputs">  
@@ -889,5 +909,6 @@ function closeActivityModal() {
 <script>
   try { localStorage.setItem('lastVisitedPage', location.pathname + location.search + location.hash); } catch(e){}
 </script>
+<div class="Version">V.11225</div>
 </body>
 </html>
