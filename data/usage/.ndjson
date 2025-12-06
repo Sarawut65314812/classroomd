@@ -115,3 +115,5 @@
 {"type":"start_buffered","usageId":"local-1764574850146-go70my7cmvc","client_id":"c-8mqtd04ydqq-mik6q43w","page":"/","start_at":"2025-12-01T07:40:50.142Z","created_at":"2025-12-01T07:40:50.146Z"}
 {"type":"start_buffered","usageId":"local-1764574850903-onz7dxyq4l8","client_id":"c-8mqtd04ydqq-mik6q43w","page":"/","start_at":"2025-12-01T07:40:50.895Z","created_at":"2025-12-01T07:40:50.903Z"}
 {"type":"start_buffered","usageId":"local-1764574876529-fy6n91oz9i7","client_id":"c-8mqtd04ydqq-mik6q43w","page":"/","start_at":"2025-12-01T07:41:16.525Z","created_at":"2025-12-01T07:41:16.529Z"}
+{"type":"start_buffered","usageId":"local-1764993750132-0ozz0xf4xm2j","client_id":"c-8mqtd04ydqq-mik6q43w","page":"/","start_at":"2025-12-06T04:02:30.077Z","created_at":"2025-12-06T04:02:30.133Z"}
+{"type":"start_buffered","usageId":"local-1764993750324-5m7f62gdpnx","client_id":"c-8mqtd04ydqq-mik6q43w","page":"/","start_at":"2025-12-06T04:02:30.265Z","created_at":"2025-12-06T04:02:30.324Z"}

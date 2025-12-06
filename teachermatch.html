@@ -401,6 +401,27 @@ button { cursor:pointer; }
 
 // ฟังก์ชันสำหรับ export PDF พร้อมชื่อผู้ทดสอบ
 
+// Safe localStorage helpers (suppress errors in Safari private mode)
+function _safeGetLocalStorage(key, fallback) {
+  try {
+    const v = localStorage.getItem(key);
+    return v === null ? fallback : v;
+  } catch (e) {
+    console.warn('localStorage.getItem failed for', key, e);
+    return fallback;
+  }
+}
+
+function _safeSetLocalStorage(key, value) {
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch (e) {
+    console.warn('localStorage.setItem failed for', key, e);
+    return false;
+  }
+}
+
 let correctAnswers = [];
 let wrongAnswers = [];
 let allQuestions = []; // เก็บโจทย์ทั้งหมด
@@ -656,8 +677,14 @@ function renderImages(type) {
   `).join('');
 }
 
-// โหลด config เก่าถ้ามี
-const savedConfig = JSON.parse(localStorage.getItem('emojiGameConfig')||'{}');
+// โหลด config เก่าถ้ามี (ปลอดภัย)
+let savedConfig = {};
+try {
+  savedConfig = JSON.parse(_safeGetLocalStorage('emojiGameConfig', '{}') || '{}');
+} catch (e) {
+  console.warn('Failed parsing emojiGameConfig', e);
+  savedConfig = {};
+}
 if(savedConfig.week) document.getElementById('weekInput').value = savedConfig.week;
 if(savedConfig.topic) document.getElementById('topicInput').value = savedConfig.topic;
 if(savedConfig.unit) document.getElementById('unitInput').value = savedConfig.unit;
@@ -692,7 +719,7 @@ function saveConfig(){
     userName: cfgUserName,
     questions: allQuestions || []  // เก็บเป็น array ของโจทย์
   };
-  localStorage.setItem('emojiGameConfig', JSON.stringify(config));
+  _safeSetLocalStorage('emojiGameConfig', JSON.stringify(config));
 
   // เด้งไปหน้าเกม
   window.location.href='gamemath.html';
@@ -712,7 +739,13 @@ function saveActivity() {
   const cfgTeacher = teacher || 'ไม่ระบุ';
   const cfgUserName = userName || 'ไม่ระบุ';
   if (allQuestions.length === 0) console.warn('[SAVE ACTIVITY] saving activity with 0 questions');
-  let savedActivities = JSON.parse(localStorage.getItem('savedActivities') || '[]');
+  let savedActivities = [];
+  try {
+    savedActivities = JSON.parse(_safeGetLocalStorage('savedActivities', '[]') || '[]');
+  } catch (e) {
+    console.warn('Failed parsing savedActivities', e);
+    savedActivities = [];
+  }
   
   // ตรวจสอบว่ากำลังแก้ไขกิจกรรมเดิมหรือไม่
   if (window.editingActivityId) {
@@ -731,7 +764,7 @@ function saveActivity() {
       activity.topic = cfgTopic;
       activity.savedAtDisplay = new Date().toLocaleString('th-TH');
       
-      localStorage.setItem('savedActivities', JSON.stringify(savedActivities));
+      _safeSetLocalStorage('savedActivities', JSON.stringify(savedActivities));
       
       alert(`✅ อัพเดตกิจกรรม "${activity.name}" สำเร็จ!`);
       
@@ -765,14 +798,20 @@ function saveActivity() {
   };
   
   savedActivities.push(activity);
-  localStorage.setItem('savedActivities', JSON.stringify(savedActivities));
+  _safeSetLocalStorage('savedActivities', JSON.stringify(savedActivities));
   
   alert(`✅ บันทึกกิจกรรม "${activityName}" สำเร็จ!`);
 }
 
 // ฟังก์ชันโหลดกิจกรรม
 function loadActivity() {
-  const savedActivities = JSON.parse(localStorage.getItem('savedActivities') || '[]');
+  let savedActivities = [];
+  try {
+    savedActivities = JSON.parse(_safeGetLocalStorage('savedActivities', '[]') || '[]');
+  } catch (e) {
+    console.warn('Failed parsing savedActivities', e);
+    savedActivities = [];
+  }
   const mathActivities = savedActivities.filter(a => a.type === 'math');
   
   if (mathActivities.length === 0) {
@@ -811,7 +850,13 @@ function loadActivity() {
 
 // เลือกกิจกรรม
 function selectActivity(activityId) {
-  const savedActivities = JSON.parse(localStorage.getItem('savedActivities') || '[]');
+  let savedActivities = [];
+  try {
+    savedActivities = JSON.parse(_safeGetLocalStorage('savedActivities', '[]') || '[]');
+  } catch (e) {
+    console.warn('Failed parsing savedActivities', e);
+    savedActivities = [];
+  }
   const activity = savedActivities.find(a => a.id === activityId);
   
   if (!activity) {
@@ -841,7 +886,7 @@ function playActivity(activityId) {
   if (!activity) { alert('ไม่พบกิจกรรมนี้'); return; }
 
   // Save config for the game page and navigate based on activity type
-  localStorage.setItem('emojiGameConfig', JSON.stringify(activity.config));
+  _safeSetLocalStorage('emojiGameConfig', JSON.stringify(activity.config));
   const type = activity.type || 'math';
   if (type === 'math') {
     window.location.href = 'gamemath.html';
@@ -857,7 +902,13 @@ function playActivity(activityId) {
 
 // แก้ไขกิจกรรม
 function editActivity(activityId) {
-  const savedActivities = JSON.parse(localStorage.getItem('savedActivities') || '[]');
+  let savedActivities = [];
+  try {
+    savedActivities = JSON.parse(_safeGetLocalStorage('savedActivities', '[]') || '[]');
+  } catch (e) {
+    console.warn('Failed parsing savedActivities', e);
+    savedActivities = [];
+  }
   const activity = savedActivities.find(a => a.id === activityId);
   
   if (!activity) {
@@ -889,9 +940,15 @@ function editActivity(activityId) {
 function deleteActivity(activityId) {
   if (!confirm('ต้องการลบกิจกรรมนี้หรือไม่?')) return;
   
-  let savedActivities = JSON.parse(localStorage.getItem('savedActivities') || '[]');
+  let savedActivities = [];
+  try {
+    savedActivities = JSON.parse(_safeGetLocalStorage('savedActivities', '[]') || '[]');
+  } catch (e) {
+    console.warn('Failed parsing savedActivities', e);
+    savedActivities = [];
+  }
   savedActivities = savedActivities.filter(a => a.id !== activityId);
-  localStorage.setItem('savedActivities', JSON.stringify(savedActivities));
+  _safeSetLocalStorage('savedActivities', JSON.stringify(savedActivities));
   
   loadActivity();
 }
@@ -907,7 +964,7 @@ function closeActivityModal() {
 <script src="/socket.io/socket.io.js"></script>
 <script src="/socket-client.js"></script>
 <script>
-  try { localStorage.setItem('lastVisitedPage', location.pathname + location.search + location.hash); } catch(e){}
+  try { _safeSetLocalStorage('lastVisitedPage', location.pathname + location.search + location.hash); } catch(e){}
 </script>
 <div class="Version">V.11225</div>
 </body>
