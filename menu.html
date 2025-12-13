@@ -728,15 +728,22 @@
     // If user was previously on another page but hosting served menu on refresh,
     // redirect back to the last visited page to preserve expected behavior.
     try {
-      const last = localStorage.getItem('lastVisitedPage');
-      if (last && typeof last === 'string') {
-        // Normalize values we consider "menu" so we don't redirect in a loop
-        const menuPaths = ['/', '/menu', '/menu.html', '/index.html'];
-        const normalizedLast = last.split('?')[0].split('#')[0];
-        if (menuPaths.indexOf(normalizedLast) === -1 && normalizedLast !== window.location.pathname) {
-          // Use replace to avoid creating a history entry and loop
-          window.location.replace(last);
-          return; // stop further menu initialization
+      // Check if this is a reload/refresh (not a normal navigation)
+      const navEntries = performance.getEntriesByType('navigation');
+      const navType = navEntries && navEntries.length > 0 ? navEntries[0].type : 'navigate';
+      
+      // Only redirect on reload, not on normal navigation
+      if (navType === 'reload') {
+        const last = localStorage.getItem('lastVisitedPage');
+        if (last && typeof last === 'string') {
+          // Normalize values we consider "menu" so we don't redirect in a loop
+          const menuPaths = ['/', '/menu', '/menu.html', '/index.html'];
+          const normalizedLast = last.split('?')[0].split('#')[0];
+          if (menuPaths.indexOf(normalizedLast) === -1 && normalizedLast !== window.location.pathname) {
+            // Use replace to avoid creating a history entry and loop
+            window.location.replace(last);
+            return; // stop further menu initialization
+          }
         }
       }
     } catch (e) {
