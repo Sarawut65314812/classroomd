@@ -212,8 +212,8 @@ function renderImages(type) {
 
 // โหลด config เก่าถ้ามี
 const savedConfig = JSON.parse(localStorage.getItem('emojiGameConfig')||'{}');
-if(savedConfig.topic) document.getElementById('topicInput').value = savedConfig.topic;
-if(savedConfig.date) document.getElementById('dateInput').value = savedConfig.date;
+if(savedConfig.topic && document.getElementById('topicInput')) document.getElementById('topicInput').value = savedConfig.topic;
+if(savedConfig.date && document.getElementById('dateInput')) document.getElementById('dateInput').value = savedConfig.date;
 if(savedConfig.correctImages) correctImages = savedConfig.correctImages;
 if(savedConfig.wrongImages) wrongImages = savedConfig.wrongImages;
 renderImages('correct');
@@ -222,7 +222,8 @@ renderImages('wrong');
 // ตั้งค่าวันที่เป็นวันปัจจุบันถ้ายังไม่มี
 if(!savedConfig.date) {
   const today = new Date().toISOString().split('T')[0];
-  document.getElementById('dateInput').value = today;
+  const dateInput = document.getElementById('dateInput');
+  if(dateInput) dateInput.value = today;
 }
 
 // Updated saveConfig to include userName in the saved configuration
