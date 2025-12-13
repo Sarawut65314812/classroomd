@@ -730,30 +730,10 @@
     try {
       const last = localStorage.getItem('lastVisitedPage');
       if (last && typeof last === 'string') {
-        // Allow explicit bypass: if URL contains ?showMenu=1 or ?forceMenu=1 or #menu, don't redirect
-        const params = new URLSearchParams(window.location.search || '');
-        const skipRedirect = params.has('showMenu') || params.has('forceMenu') || (window.location.hash === '#menu');
-
-        // Determine navigation type: 'reload' when user pressed refresh
-        let navType = null;
-        try {
-          const navEntries = performance.getEntriesByType && performance.getEntriesByType('navigation');
-          if (navEntries && navEntries.length > 0 && navEntries[0].type) {
-            navType = navEntries[0].type; // 'navigate', 'reload', 'back_forward', etc.
-          } else if (performance.navigation && typeof performance.navigation.type === 'number') {
-            navType = (performance.navigation.type === 1) ? 'reload' : 'navigate';
-          }
-        } catch (e) {
-          navType = null;
-        }
-
         // Normalize values we consider "menu" so we don't redirect in a loop
         const menuPaths = ['/', '/menu', '/menu.html', '/index.html'];
         const normalizedLast = last.split('?')[0].split('#')[0];
-
-        // Only auto-restore last visited page when the navigation is a reload (user pressed refresh).
-        // This preserves normal link clicks and back/forward navigation.
-        if (!skipRedirect && navType === 'reload' && menuPaths.indexOf(normalizedLast) === -1 && normalizedLast !== window.location.pathname) {
+        if (menuPaths.indexOf(normalizedLast) === -1 && normalizedLast !== window.location.pathname) {
           // Use replace to avoid creating a history entry and loop
           window.location.replace(last);
           return; // stop further menu initialization
@@ -829,6 +809,24 @@ if(window.io){
     });
   }catch(e){}
 }
+</script>
+<script>
+var __localUsageId_menu = null;
+window.addEventListener('load', function(){
+  try{
+    if (window.usageTracker && typeof window.usageTracker.start === 'function') {
+      __localUsageId_menu = window.usageTracker.start(location.pathname || 'menu.html', 'menu-home');
+      console.log('usage started (menu)', __localUsageId_menu);
+    }
+  }catch(e){ console.warn('usageTracker.start failed (menu)', e); }
+});
+window.addEventListener('beforeunload', function(){
+  try{
+    if (window.usageTracker && typeof window.usageTracker.end === 'function') {
+      window.usageTracker.end(__localUsageId_menu);
+    }
+  }catch(e){}
+});
 </script>
 
 </body>

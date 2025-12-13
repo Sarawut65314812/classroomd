@@ -103,7 +103,7 @@ app.post('/api/usage/start', async (req, res) => {
     } catch (err) {
       console.warn('[WARN] recordDailyPageView call failed', err && err.message)
     }
-    return res.json({ success: true, usageId, doc })
+    return res.json({ success: true, usageId, clientId: clientId || null, page: page || null })
   } catch (e) {
     console.error('[ERROR] /api/usage/start', e)
     res.status(500).json({ success: false, message: 'failed to start usage' })

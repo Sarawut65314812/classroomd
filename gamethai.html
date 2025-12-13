@@ -10,25 +10,6 @@
 <link rel="stylesheet" href="css/gamethai.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<style>
-/* Global version badge: fixed bottom-right on the viewport */
-.Version {
-  position: fixed;
-  right: 12px;
-  bottom: 10px;
-  font-family: 'Roboto', Helvetica, Arial, sans-serif;
-  font-weight: 300;
-  font-size: clamp(0.7rem, 0.9vw, 0.9rem);
-  color: #8a8f93;
-  background: transparent;
-  opacity: 0.95;
-  padding: 6px 8px;
-  border-radius: 6px;
-  z-index: 2147483647;
-  pointer-events: none;
-  box-shadow: 0 1px 0 rgba(0,0,0,0.08);
-}
-</style>
 </head>
 <body>
 
@@ -495,6 +476,26 @@ function playFailSound() {
 <!-- Socket client (connect + heartbeat) -->
 <script src="/socket.io/socket.io.js"></script>
 <script src="/socket-client.js"></script>
-<div class="Version">V.11225</div>
+<script>
+var __localUsageId_gamethai = null;
+window.addEventListener('load', function(){
+  try{
+    if (window.usageTracker && typeof window.usageTracker.start === 'function') {
+      const activityName = (function(){
+        try { return JSON.parse(localStorage.getItem('emojiGameConfig')||'{}').topic || 'gamethai'; } catch(e){ return 'gamethai'; }
+      })();
+      __localUsageId_gamethai = window.usageTracker.start(location.pathname || 'gamethai.html', activityName);
+      console.log('usage started (gamethai)', __localUsageId_gamethai);
+    }
+  }catch(e){ console.warn('usageTracker.start failed (gamethai)', e); }
+});
+window.addEventListener('beforeunload', function(){
+  try{
+    if (window.usageTracker && typeof window.usageTracker.end === 'function') {
+      window.usageTracker.end(__localUsageId_gamethai);
+    }
+  }catch(e){}
+});
+</script>
 </body>
 </html>

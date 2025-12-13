@@ -268,35 +268,9 @@ let gameStarted = false;
 let currentQuestionIndex = 0;
 let allQuestions = [];
 let playCount = 1; // นับจำนวนครั้งที่เล่น
-// Safe localStorage helpers (suppress errors in Safari private mode)
-function _safeGetLocalStorage(key, fallback) {
-  try {
-    const v = localStorage.getItem(key);
-    return v === null ? fallback : v;
-  } catch (e) {
-    console.warn('localStorage.getItem failed for', key, e);
-    return fallback;
-  }
-}
 
-function _safeSetLocalStorage(key, value) {
-  try {
-    localStorage.setItem(key, value);
-    return true;
-  } catch (e) {
-    console.warn('localStorage.setItem failed for', key, e);
-    return false;
-  }
-}
-
-// โหลด config จาก localStorage (ปลอดภัยสำหรับ Safari private mode)
-let teacherConfig = {};
-try {
-  teacherConfig = JSON.parse(_safeGetLocalStorage('emojiGameConfig', '{}') || '{}');
-} catch (e) {
-  console.warn('Failed parsing emojiGameConfig', e);
-  teacherConfig = {};
-}
+// โหลด config จาก localStorage
+let teacherConfig = JSON.parse(localStorage.getItem('emojiGameConfig') || '{}');
 document.getElementById('topicName').innerText = teacherConfig.topic || 'Unknown';
 
 // ถ้าเพิ่งเลือกกิจกรรม (loadActivity) ให้ถามชื่อผู้ทดสอบ (optional)
@@ -305,17 +279,11 @@ if (window.location.hash === '#promptUserName') {
     let userName = prompt('กรุณากรอกชื่อผู้ทดสอบ (ถ้าไม่กรอกจะข้ามได้):', teacherConfig.userName || '');
     if (userName !== null) {
       userName = userName.trim();
-      // อัปเดตใน localStorage (ปลอดภัย)
-      try {
-        const cfgStr = _safeGetLocalStorage('emojiGameConfig', '{}') || '{}';
-        const config = JSON.parse(cfgStr);
-        config.userName = userName;
-        _safeSetLocalStorage('emojiGameConfig', JSON.stringify(config));
-        teacherConfig.userName = userName;
-      } catch (e) {
-        console.warn('Failed to update emojiGameConfig', e);
-        teacherConfig.userName = userName;
-      }
+      // อัปเดตใน localStorage
+      const config = JSON.parse(localStorage.getItem('emojiGameConfig') || '{}');
+      config.userName = userName;
+      localStorage.setItem('emojiGameConfig', JSON.stringify(config));
+      teacherConfig.userName = userName;
     }
     // ลบ hash เพื่อไม่ให้ถามซ้ำ
     window.location.hash = '';
@@ -344,21 +312,15 @@ if (!Array.isArray(teacherConfig.correctImages)) {
   teacherConfig.correctImages = [];
 }
 
-// โหลดข้อมูลกิจกรรมจาก localStorage (ปลอดภัย)
-let savedActivities = [];
-try {
-  savedActivities = JSON.parse(_safeGetLocalStorage('savedActivities', '[]') || '[]');
-} catch (e) {
-  console.warn('Failed parsing savedActivities', e);
-  savedActivities = [];
-}
+// โหลดข้อมูลกิจกรรมจาก localStorage
+const savedActivities = JSON.parse(localStorage.getItem('savedActivities') || '[]');
 if (savedActivities.length > 0) {
   const latestActivity = savedActivities[savedActivities.length - 1]; // ใช้กิจกรรมล่าสุด
   teacherConfig.correctImages = latestActivity.config.questions || [];
 }
 
 // ใช้จำนวนคำถามทั้งหมดจาก teacherConfig.correctImages
-const totalQuestions = (teacherConfig.correctImages && teacherConfig.correctImages.length) ? teacherConfig.correctImages.length : 0;
+const totalQuestions = teacherConfig.correctImages.length || 0;
 
 // โหลดโจทย์ทั้งหมดและสุ่มลำดับ
 if (teacherConfig.questions && teacherConfig.questions.length > 0) {
@@ -1068,8 +1030,7 @@ function exportToPDF() {
     // ดึงชื่อผู้ทดสอบจาก localStorage (emojiGameConfig.userName)
     let userName = '-';
     try {
-      const cfgStr = _safeGetLocalStorage('emojiGameConfig', '{}') || '{}';
-      const config = JSON.parse(cfgStr);
+      const config = JSON.parse(localStorage.getItem('emojiGameConfig') || '{}');
       if (config.userName) userName = config.userName;
     } catch (e) {}
 
@@ -1145,17 +1106,11 @@ function exportToPDF() {
   }
 }
 
-// ตรวจสอบข้อมูลใน emojiGameConfig (ปลอดภัย)
-let emojiGameConfig = {};
-try {
-  emojiGameConfig = JSON.parse(_safeGetLocalStorage('emojiGameConfig', '{}') || '{}');
-} catch (e) {
-  console.warn('Failed parsing emojiGameConfig', e);
-  emojiGameConfig = {};
-}
+// ตรวจสอบข้อมูลใน emojiGameConfig
+const emojiGameConfig = JSON.parse(localStorage.getItem('emojiGameConfig') || '{}');
 if (!emojiGameConfig.questions || emojiGameConfig.questions.length === 0) {
   console.warn('emojiGameConfig ไม่มีคำถาม');
-  alert('ไม่พบคำถามในกิจกรรม กรุณาไปหน้าครูตั้งค่า');
+  alert('ไม่พบคำถามในกิจกรรม กรุณาตรวจสอบการตั้งค่ากิจกรรม');
 } else {
   teacherConfig.correctImages = emojiGameConfig.questions;
 }
@@ -1305,6 +1260,27 @@ function toggleSound() {
   try {
     localStorage.setItem('lastVisitedPage', location.pathname + location.search + location.hash);
   } catch (e) { /* ignore */ }
+</script>
+<script>
+var __localUsageId_gamemath = null;
+window.addEventListener('load', function(){
+  try{
+    if (window.usageTracker && typeof window.usageTracker.start === 'function') {
+      const activityName = (function(){
+        try { return JSON.parse(localStorage.getItem('emojiGameConfig')||'{}').topic || 'gamemath'; } catch(e){ return 'gamemath'; }
+      })();
+      __localUsageId_gamemath = window.usageTracker.start(location.pathname || 'gamemath.html', activityName);
+      console.log('usage started (gamemath)', __localUsageId_gamemath);
+    }
+  }catch(e){ console.warn('usageTracker.start failed (gamemath)', e); }
+});
+window.addEventListener('beforeunload', function(){
+  try{
+    if (window.usageTracker && typeof window.usageTracker.end === 'function') {
+      window.usageTracker.end(__localUsageId_gamemath);
+    }
+  }catch(e){}
+});
 </script>
 
   <div class="Version">V.11225</div>

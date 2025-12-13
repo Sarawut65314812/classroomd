@@ -315,32 +315,12 @@ button { cursor:pointer; }
 .info-section h2 {
   margin-top: 0;
 }
-
-/* Global version badge: fixed bottom-right on the viewport */
-.Version {
-  position: fixed;
-  right: 12px;
-  bottom: 10px;
-  font-family: 'Roboto', Helvetica, Arial, sans-serif;
-  font-weight: 300;
-  font-size: clamp(0.7rem, 0.9vw, 0.9rem);
-  color: #8a8f93;
-  background: transparent;
-  opacity: 0.95;
-  padding: 6px 8px;
-  border-radius: 6px;
-  z-index: 2147483647;
-  pointer-events: none;
-  box-shadow: 0 1px 0 rgba(0,0,0,0.08);
-}
 </style>
 </head>
 <body>
 
 <div class="info-section">
   <h1>กิจกรรมเลข</h1>
-  
-  
   <h3>กรอกข้อมูลกิจกรรม</h3>
   
   <div class="info-inputs">  
@@ -400,27 +380,6 @@ button { cursor:pointer; }
 <script>
 
 // ฟังก์ชันสำหรับ export PDF พร้อมชื่อผู้ทดสอบ
-
-// Safe localStorage helpers (suppress errors in Safari private mode)
-function _safeGetLocalStorage(key, fallback) {
-  try {
-    const v = localStorage.getItem(key);
-    return v === null ? fallback : v;
-  } catch (e) {
-    console.warn('localStorage.getItem failed for', key, e);
-    return fallback;
-  }
-}
-
-function _safeSetLocalStorage(key, value) {
-  try {
-    localStorage.setItem(key, value);
-    return true;
-  } catch (e) {
-    console.warn('localStorage.setItem failed for', key, e);
-    return false;
-  }
-}
 
 let correctAnswers = [];
 let wrongAnswers = [];
@@ -677,14 +636,8 @@ function renderImages(type) {
   `).join('');
 }
 
-// โหลด config เก่าถ้ามี (ปลอดภัย)
-let savedConfig = {};
-try {
-  savedConfig = JSON.parse(_safeGetLocalStorage('emojiGameConfig', '{}') || '{}');
-} catch (e) {
-  console.warn('Failed parsing emojiGameConfig', e);
-  savedConfig = {};
-}
+// โหลด config เก่าถ้ามี
+const savedConfig = JSON.parse(localStorage.getItem('emojiGameConfig')||'{}');
 if(savedConfig.week) document.getElementById('weekInput').value = savedConfig.week;
 if(savedConfig.topic) document.getElementById('topicInput').value = savedConfig.topic;
 if(savedConfig.unit) document.getElementById('unitInput').value = savedConfig.unit;
@@ -719,7 +672,7 @@ function saveConfig(){
     userName: cfgUserName,
     questions: allQuestions || []  // เก็บเป็น array ของโจทย์
   };
-  _safeSetLocalStorage('emojiGameConfig', JSON.stringify(config));
+  localStorage.setItem('emojiGameConfig', JSON.stringify(config));
 
   // เด้งไปหน้าเกม
   window.location.href='gamemath.html';
@@ -739,13 +692,7 @@ function saveActivity() {
   const cfgTeacher = teacher || 'ไม่ระบุ';
   const cfgUserName = userName || 'ไม่ระบุ';
   if (allQuestions.length === 0) console.warn('[SAVE ACTIVITY] saving activity with 0 questions');
-  let savedActivities = [];
-  try {
-    savedActivities = JSON.parse(_safeGetLocalStorage('savedActivities', '[]') || '[]');
-  } catch (e) {
-    console.warn('Failed parsing savedActivities', e);
-    savedActivities = [];
-  }
+  let savedActivities = JSON.parse(localStorage.getItem('savedActivities') || '[]');
   
   // ตรวจสอบว่ากำลังแก้ไขกิจกรรมเดิมหรือไม่
   if (window.editingActivityId) {
@@ -764,7 +711,7 @@ function saveActivity() {
       activity.topic = cfgTopic;
       activity.savedAtDisplay = new Date().toLocaleString('th-TH');
       
-      _safeSetLocalStorage('savedActivities', JSON.stringify(savedActivities));
+      localStorage.setItem('savedActivities', JSON.stringify(savedActivities));
       
       alert(`✅ อัพเดตกิจกรรม "${activity.name}" สำเร็จ!`);
       
@@ -798,20 +745,14 @@ function saveActivity() {
   };
   
   savedActivities.push(activity);
-  _safeSetLocalStorage('savedActivities', JSON.stringify(savedActivities));
+  localStorage.setItem('savedActivities', JSON.stringify(savedActivities));
   
   alert(`✅ บันทึกกิจกรรม "${activityName}" สำเร็จ!`);
 }
 
 // ฟังก์ชันโหลดกิจกรรม
 function loadActivity() {
-  let savedActivities = [];
-  try {
-    savedActivities = JSON.parse(_safeGetLocalStorage('savedActivities', '[]') || '[]');
-  } catch (e) {
-    console.warn('Failed parsing savedActivities', e);
-    savedActivities = [];
-  }
+  const savedActivities = JSON.parse(localStorage.getItem('savedActivities') || '[]');
   const mathActivities = savedActivities.filter(a => a.type === 'math');
   
   if (mathActivities.length === 0) {
@@ -850,13 +791,7 @@ function loadActivity() {
 
 // เลือกกิจกรรม
 function selectActivity(activityId) {
-  let savedActivities = [];
-  try {
-    savedActivities = JSON.parse(_safeGetLocalStorage('savedActivities', '[]') || '[]');
-  } catch (e) {
-    console.warn('Failed parsing savedActivities', e);
-    savedActivities = [];
-  }
+  const savedActivities = JSON.parse(localStorage.getItem('savedActivities') || '[]');
   const activity = savedActivities.find(a => a.id === activityId);
   
   if (!activity) {
@@ -886,7 +821,7 @@ function playActivity(activityId) {
   if (!activity) { alert('ไม่พบกิจกรรมนี้'); return; }
 
   // Save config for the game page and navigate based on activity type
-  _safeSetLocalStorage('emojiGameConfig', JSON.stringify(activity.config));
+  localStorage.setItem('emojiGameConfig', JSON.stringify(activity.config));
   const type = activity.type || 'math';
   if (type === 'math') {
     window.location.href = 'gamemath.html';
@@ -902,13 +837,7 @@ function playActivity(activityId) {
 
 // แก้ไขกิจกรรม
 function editActivity(activityId) {
-  let savedActivities = [];
-  try {
-    savedActivities = JSON.parse(_safeGetLocalStorage('savedActivities', '[]') || '[]');
-  } catch (e) {
-    console.warn('Failed parsing savedActivities', e);
-    savedActivities = [];
-  }
+  const savedActivities = JSON.parse(localStorage.getItem('savedActivities') || '[]');
   const activity = savedActivities.find(a => a.id === activityId);
   
   if (!activity) {
@@ -940,15 +869,9 @@ function editActivity(activityId) {
 function deleteActivity(activityId) {
   if (!confirm('ต้องการลบกิจกรรมนี้หรือไม่?')) return;
   
-  let savedActivities = [];
-  try {
-    savedActivities = JSON.parse(_safeGetLocalStorage('savedActivities', '[]') || '[]');
-  } catch (e) {
-    console.warn('Failed parsing savedActivities', e);
-    savedActivities = [];
-  }
+  let savedActivities = JSON.parse(localStorage.getItem('savedActivities') || '[]');
   savedActivities = savedActivities.filter(a => a.id !== activityId);
-  _safeSetLocalStorage('savedActivities', JSON.stringify(savedActivities));
+  localStorage.setItem('savedActivities', JSON.stringify(savedActivities));
   
   loadActivity();
 }
@@ -964,8 +887,25 @@ function closeActivityModal() {
 <script src="/socket.io/socket.io.js"></script>
 <script src="/socket-client.js"></script>
 <script>
-  try { _safeSetLocalStorage('lastVisitedPage', location.pathname + location.search + location.hash); } catch(e){}
+  try { localStorage.setItem('lastVisitedPage', location.pathname + location.search + location.hash); } catch(e){}
 </script>
-<div class="Version">V.11225</div>
+<script>
+var __localUsageId_teachermatch = null;
+window.addEventListener('load', function(){
+  try{
+    if (window.usageTracker && typeof window.usageTracker.start === 'function') {
+      __localUsageId_teachermatch = window.usageTracker.start(location.pathname || 'teachermatch.html', 'teacher-config-math');
+      console.log('usage started (teachermatch)', __localUsageId_teachermatch);
+    }
+  }catch(e){ console.warn('usageTracker.start failed (teachermatch)', e); }
+});
+window.addEventListener('beforeunload', function(){
+  try{
+    if (window.usageTracker && typeof window.usageTracker.end === 'function') {
+      window.usageTracker.end(__localUsageId_teachermatch);
+    }
+  }catch(e){}
+});
+</script>
 </body>
 </html>
