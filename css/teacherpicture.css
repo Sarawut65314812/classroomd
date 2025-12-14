@@ -242,7 +242,7 @@ button { cursor:pointer; }
 .file-input-wrapper {
   position: relative;
   display: inline-block;
-  margin: 10px;
+  margin: 5px;
 }
 
 /* Neon Button Style */
@@ -283,45 +283,48 @@ button { cursor:pointer; }
   background: #fff8e8;
   color: #333;
   border: 2px dashed #74640a;
-  border-radius: 15px;
+  border-radius: 8px;
   font-weight: 500;
-  font-size: 16px;
-  padding: 12px 24px;
+  font-size: 12px;
+  padding: 4px 8px;
   margin-top: 16px;
   display: inline-block;
   cursor: pointer;
   -webkit-transition: background 0.2s, border-color 0.2s;
   transition: background 0.2s, border-color 0.2s;
+  max-width: 50%;
 }
 .file-input-label-correct {
   background: #fffdfd !important;
   color: #4CAF50 !important;
   border: 2px solid #4CAF50 !important;
-  border-radius: 12px !important;
+  border-radius: 8px !important;
   font-weight: 500 !important;
-  font-size: 14px !important; /* reduced size */
-  padding: 8px 14px !important; /* tighter padding */
+  font-size: 11px !important;
+  padding: 5px 10px !important;
   margin-top: 12px !important;
   display: inline-block !important;
   cursor: pointer !important;
   -webkit-transition: background 0.2s, border-color 0.2s !important;
   transition: background 0.2s, border-color 0.2s !important;
-  min-height: 28px !important;
+  min-height: 24px !important;
+  max-width: 90% !important;
 }
 .file-input-label-wrong {
   background: #fff !important;
   color: #f44336 !important;
-  border: none !important;
-  border-radius: 12px !important;
+  border: 2px solid #f44336 !important;
+  border-radius: 8px !important;
   font-weight: 500 !important;
-  font-size: 14px !important;
-  padding: 8px 14px !important;
+  font-size: 11px !important;
+  padding: 5px 10px !important;
   margin-top: 12px !important;
   display: inline-block !important;
   cursor: pointer !important;
   -webkit-transition: background 0.2s !important;
   transition: background 0.2s !important;
-  min-height: 28px !important;
+  min-height: 24px !important;
+  max-width: 90% !important;
 }
 
 .file-input-label:hover {
@@ -479,6 +482,14 @@ button { cursor:pointer; }
   }
 }
 
+/* iPad portrait: wider container */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+  .main-container {
+    max-width: 95vw !important;
+    width: 95vw !important;
+  }
+}
+
 /* iPad landscape: reduce panel width to ~40% to match user''s request
    This overrides the inline flex/max-width using !important so the
    panels narrow in landscape on typical tablet viewports */
@@ -618,8 +629,8 @@ button { cursor:pointer; }
     padding: 6px !important;
   }
   .main-container > div[style*="display:flex"] > div .file-input-wrapper {
-    max-width: 86% !important;
-    margin: 8px auto !important;
+    display: inline-block !important;
+    margin: 8px 0 !important;
   }
   .main-container > div[style*="display:flex"] > div .image-preview-item {
     width: 96px !important;
@@ -670,9 +681,13 @@ button { cursor:pointer; }
 /* Portrait-specific: ลดความกว้างกรอบภายใน (กรอบเทา/ไฟล์อินพุต) ให้แคบลงเมื่อเครื่องอยู่ในแนวตั้ง */
 @media (orientation: portrait) {
   .main-container {
-    max-width: 86vw !important;
-    width: 86vw !important;
+    max-width: 95vw !important;
+    width: 95vw !important;
     padding: 10px !important;
+  }
+  body .main-container {
+    max-width: 95vw !important;
+    width: 95vw !important;
   }
   /* ใช้ auto-sizing เหมือน landscape: panel sizing controlled by tablet block */
 }
@@ -680,7 +695,7 @@ button { cursor:pointer; }
 /* Ensure tablet panels use 30% on common tablet and iPad viewports
    Placing this at the end of the stylesheet guarantees it overrides
    earlier, more generic rules (cascade and specificity). */
-@media (min-width: 768px) and (max-width: 1366px) {
+@media (min-width: 768px) and (max-width: 1000px) {
   .main-container > div[style*="display:flex"] > div {
     -webkit-box-flex: 0 !important;
     -webkit-flex: 0 0 30% !important;
@@ -727,10 +742,26 @@ button { cursor:pointer; }
 /* Reduce white box width inside red/green panels for portrait */
 @media (min-width: 765px) and (max-width: 1360px) and (orientation: portrait) {
   .main-container > div[style*="display:flex"] > div .file-input-wrapper {
-    max-width: 50% !important; /* Reduce width to 50% */
-    margin-left: 20px !important; /* Maintain left shift of 20px */
+    max-width: 80% !important;
+    margin: 6px auto !important;
     -webkit-box-sizing: border-box !important;
-            box-sizing: border-box !important; /* Ensure proper sizing */
+            box-sizing: border-box !important;
+  }
+}
+
+/* iPad Pro portrait fix - MUST BE LAST */
+@media (min-width: 1024px) and (orientation: portrait) {
+  .main-container {
+    max-width: 95vw !important;
+    width: 95vw !important;
+  }
+  .main-container > div[style*="display:flex"] > div {
+    flex: 1 1 45% !important;
+    max-width: 45% !important;
+  }
+  .main-container > div[style*="display:flex"] > div .file-input-wrapper {
+    max-width: 80% !important;
+    margin: 6px auto !important;
   }
 }
 
