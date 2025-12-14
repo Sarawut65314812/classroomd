@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <link rel="stylesheet" href="css/menu.css">
+    <script src="/js/prevent-image-download.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
 
@@ -753,18 +754,18 @@
     const introVideoContainer = document.getElementById("introVideoContainer");
     const introVideo = document.getElementById("introVideo");
 
-    // Check if the video has already been played
-    const hasPlayedIntro = localStorage.getItem("hasPlayedIntro");
+    // Check if the video has already been played in this session
+    const hasPlayedIntro = sessionStorage.getItem("hasPlayedIntro");
 
     if (!hasPlayedIntro) {
       // Show the video container and play the video
       introVideoContainer.style.display = "flex";
       introVideo.play();
 
-      // When the video ends, hide the container and set the flag in localStorage
+      // When the video ends, hide the container and set the flag in sessionStorage
       introVideo.onended = function () {
         introVideoContainer.style.display = "none";
-        localStorage.setItem("hasPlayedIntro", "true");
+        sessionStorage.setItem("hasPlayedIntro", "true");
       };
     } else {
       // Hide the video container if the video has already been played
