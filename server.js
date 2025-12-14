@@ -5,6 +5,10 @@ import { Server } from "socket.io"
 import http from "http"
 import fs from "fs"
 import { MongoClient } from 'mongodb'
+import dotenv from 'dotenv'
+
+// Load environment variables from .env file
+dotenv.config()
 
 const app = express()
 
