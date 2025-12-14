@@ -10,6 +10,18 @@
 <link rel="stylesheet" href="css/gamethai.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+  /* ป้องกันการดาวน์โหลดรูปภาพเมื่อกดค้าง */
+  img {
+    -webkit-touch-callout: none !important;
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+    user-select: none !important;
+    -webkit-user-drag: none !important;
+    user-drag: none !important;
+  }
+</style>
 </head>
 <body>
 
@@ -496,6 +508,19 @@ window.addEventListener('beforeunload', function(){
     }
   }catch(e){}
 });
+
+// ป้องกันการดาวน์โหลดรูปภาพเมื่อกดค้าง (Safari & Chrome)
+document.addEventListener('contextmenu', function(e) {
+  if (e.target.tagName === 'IMG') {
+    e.preventDefault();
+    return false;
+  }
+});
+document.addEventListener('touchstart', function(e) {
+  if (e.target.tagName === 'IMG') {
+    e.target.style.webkitTouchCallout = 'none';
+  }
+}, { passive: true });
 </script>
 </body>
 </html>
