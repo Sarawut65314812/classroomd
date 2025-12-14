@@ -11,20 +11,37 @@
     <!-- ...existing code... -->
 
     <div class="container">
-        <h1>เลือกหมวดหมู่</h1>
+        <h1>เลือกโหมด</h1>
+
+          <a href="/teacherpicture.html" 
+             id="smartCheckBtn"
+             class="neon-btn bg-general text-[clamp(1rem,2.5vw,1.75rem)] font-sans font-light px-[clamp(1.5rem,4vw,2.5rem)] py-[clamp(0.875rem,2.5vw,1.25rem)] rounded-xl whitespace-nowrap flex items-center justify-center">
+          สมาร์ทเช็ค
+        </a>
         
         <a href="/teachermatch.html" class="neon-btn bg-calculate text-[clamp(1rem,2.5vw,1.75rem)] font-sans font-light px-[clamp(1.5rem,4vw,2.5rem)] py-[clamp(0.875rem,2.5vw,1.25rem)] rounded-xl whitespace-nowrap flex items-center justify-center">
           ตัวเลข
-        </a>
-
-        <a href="/teacherpicture.html" class="neon-btn bg-general text-[clamp(1rem,2.5vw,1.75rem)] font-sans font-light px-[clamp(1.5rem,4vw,2.5rem)] py-[clamp(0.875rem,2.5vw,1.25rem)] rounded-xl whitespace-nowrap flex items-center justify-center">
-          ทั่วไป
         </a>
 
         <a href="/teacherthai.html" class="neon-btn bg-general text-[clamp(1rem,2.5vw,1.75rem)] font-sans font-light px-[clamp(1.5rem,4vw,2.5rem)] py-[clamp(0.875rem,2.5vw,1.25rem)] rounded-xl whitespace-nowrap flex items-center justify-center">
           ภาษา
         </a>
     </div>
+
+<!-- Info Popup Modal -->
+<div id="infoModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; align-items: center; justify-content: center;">
+  <div style="background: linear-gradient(180deg, #f8f6f0 0%, #fffef8 45%, #fff8e8 55%, #f5f0e5 100%); padding: 40px; border-radius: 20px; border: 6px solid #74640a; box-shadow: 1px 1px 0 #000, -8px 6px #3b3305, 0 0 30px rgba(255,230,160,0.7); max-width: 500px; width: 90%;">
+    <h2 style="color: #333; margin-bottom: 20px; font-size: 28px; text-align: center;">สมาร์ทเช็ค</h2>
+    <p style="color: #555; font-size: 18px; line-height: 1.8; text-align: center; margin-bottom: 20px;">
+      แบบฝึกหัดตรวจความเข้าใจที่รวดเร็ว ใช้งานง่าย และเหมาะกับทุกเนื้อหา
+    </p>
+    <div style="display: flex; justify-content: center;">
+      <button onclick="closeInfoModal()" class="neon-btn" style="font-size: 1rem; padding: 8px 30px; min-height: 36px;">
+        ปิด
+      </button>
+    </div>
+  </div>
+</div>
 
 <!-- Feedback Modal -->
 <div id="feedbackModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; align-items: center; justify-content: center;">
@@ -51,6 +68,56 @@
 </button>
 
 <script>
+// Long press for Smart Check info
+let longPressTimer;
+const smartCheckBtn = document.getElementById('smartCheckBtn');
+
+smartCheckBtn?.addEventListener('mousedown', function(e) {
+  longPressTimer = setTimeout(() => {
+    e.preventDefault();
+    openInfoModal();
+  }, 800); // กดค้าง 800ms
+});
+
+smartCheckBtn?.addEventListener('mouseup', function() {
+  clearTimeout(longPressTimer);
+});
+
+smartCheckBtn?.addEventListener('mouseleave', function() {
+  clearTimeout(longPressTimer);
+});
+
+smartCheckBtn?.addEventListener('touchstart', function(e) {
+  longPressTimer = setTimeout(() => {
+    e.preventDefault();
+    openInfoModal();
+  }, 800);
+});
+
+smartCheckBtn?.addEventListener('touchend', function() {
+  clearTimeout(longPressTimer);
+});
+
+smartCheckBtn?.addEventListener('touchcancel', function() {
+  clearTimeout(longPressTimer);
+});
+
+// Info Modal Functions
+function openInfoModal() {
+  document.getElementById('infoModal').style.display = 'flex';
+}
+
+function closeInfoModal() {
+  document.getElementById('infoModal').style.display = 'none';
+}
+
+// Click outside to close
+document.getElementById('infoModal')?.addEventListener('click', function(e) {
+  if (e.target === this) {
+    closeInfoModal();
+  }
+});
+
 // Contact button click: open feedback modal
 document.getElementById('contactButton')?.addEventListener('click', function() {
   openFeedbackModal();
