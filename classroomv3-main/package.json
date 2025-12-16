@@ -1,0 +1,38 @@
+{
+  "name": "classroom-games",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "start": "serve -s dist -l 3000",
+    "server": "cd backend && npm run dev"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.4",
+    "konva": "^9.3.0",
+    "react": "^18.2.0",
+    "react-dnd": "^16.0.1",
+    "react-dnd-html5-backend": "^16.0.1",
+    "react-dnd-multi-backend": "^9.0.0",
+    "react-dnd-touch-backend": "^16.0.1",
+    "react-dom": "^18.2.0",
+    "react-konva": "^18.2.10",
+    "react-router-dom": "^6.21.0",
+    "socket.io-client": "^4.8.1",
+    "xlsx": "^0.18.5",
+    "zustand": "^4.4.7"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.43",
+    "@types/react-dom": "^18.2.17",
+    "@vitejs/plugin-react": "^4.2.1",
+    "serve": "^14.2.5",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.8"
+  }
+}

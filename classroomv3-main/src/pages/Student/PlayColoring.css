@@ -1,0 +1,611 @@
+.coloring-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #FFD6E8 0%, #FFE5B4 100%);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.coloring-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.coloring-header h1 {
+  font-size: 2.5rem;
+  color: #333;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.back-btn, .change-image-btn {
+  background: linear-gradient(135deg, #FF6B9D 0%, #FFC75F 100%);
+  border: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: white;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.music-btn {
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+  border: none;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 1.5rem;
+  color: white;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.music-btn:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 6px 16px rgba(76, 175, 80, 0.3);
+}
+
+.change-image-btn {
+  background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%);
+  color: white;
+}
+
+.back-btn:hover, .change-image-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+}
+
+.coloring-setup {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.setup-section {
+  background: white;
+  padding: 30px;
+  border-radius: 20px;
+  margin-bottom: 30px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+}
+
+.setup-section h2 {
+  margin: 0 0 25px 0;
+  color: #333;
+  font-size: 1.8rem;
+}
+
+.image-gallery {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 10px 5px 25px 5px;
+  margin-bottom: 20px;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch; /* สำหรับ iOS */
+}
+
+/* Custom scrollbar สำหรับเบราว์เซอร์ */
+.image-gallery::-webkit-scrollbar {
+  height: 12px;
+}
+
+.image-gallery::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.image-gallery::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%);
+  border-radius: 10px;
+}
+
+.image-gallery::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #FF5252 0%, #FF7043 100%);
+}
+
+.gallery-item {
+  min-width: 200px;
+  max-width: 200px;
+  flex-shrink: 0;
+  border: 3px solid #e0e0e0;
+  border-radius: 16px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s;
+  background: white;
+}
+
+.gallery-item:hover {
+  transform: translateY(-8px) scale(1.05);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  border-color: #FF6B6B;
+}
+
+.gallery-item:active {
+  transform: translateY(-4px) scale(1.02);
+}
+
+.gallery-item img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  display: block;
+}
+
+.gallery-item span {
+  display: block;
+  padding: 12px;
+  text-align: center;
+  font-weight: 600;
+  color: #555;
+  background: #f9f9f9;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.blank-paper-item {
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+  border-color: #4CAF50 !important;
+}
+
+.blank-paper-item:hover {
+  border-color: #45a049 !important;
+  box-shadow: 0 8px 24px rgba(76, 175, 80, 0.25);
+}
+
+.blank-paper-preview {
+  width: 100%;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+}
+
+.blank-paper-item span {
+  background: linear-gradient(135deg, #66BB6A 0%, #4CAF50 100%);
+  color: white;
+  font-weight: 700;
+}
+
+.divider {
+  text-align: center;
+  margin: 30px 0;
+  position: relative;
+  color: #999;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 40%;
+  height: 2px;
+  background: #ddd;
+}
+
+.divider::before {
+  left: 0;
+}
+
+.divider::after {
+  right: 0;
+}
+
+.upload-big-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 50px;
+  border: 4px dashed #ccc;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.3s;
+  background: #f9f9f9;
+}
+
+.upload-big-btn:hover {
+  border-color: #FF6B6B;
+  background: #fff;
+  transform: scale(1.02);
+}
+
+.upload-big-btn .icon {
+  font-size: 4rem;
+  margin-bottom: 15px;
+}
+
+.upload-big-btn .text {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.upload-big-btn .hint {
+  font-size: 1rem;
+  color: #999;
+}
+
+.no-images-hint {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+}
+
+.no-images-hint p {
+  font-size: 1.3rem;
+  margin-bottom: 10px;
+}
+
+.no-images-hint small {
+  color: #999;
+  font-size: 1rem;
+}
+
+.coloring-container {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  align-items: flex-start;
+  flex: 1;
+  padding: 10px 0;
+}
+
+.canvas-wrapper {
+  background: white;
+  border-radius: 16px;
+  padding: 10px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  max-width: 100%;
+}
+
+.drawing-stage {
+  border: 3px solid #333;
+  border-radius: 8px;
+  cursor: crosshair;
+  touch-action: none;
+  background: white;
+  display: block;
+  margin: 0 auto;
+}
+
+.mascot {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: float 3s ease-in-out infinite;
+}
+
+.mascot-avatar {
+  font-size: 4rem;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+}
+
+.mascot-speech {
+  background: white;
+  padding: 10px 20px;
+  border-radius: 20px;
+  margin-top: 10px;
+  font-size: 1.1rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  position: relative;
+}
+
+.mascot-speech::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  right: 30px;
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 10px solid white;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+/* Responsive adjustments for different screen sizes */
+
+/* Smart TV & 4K Displays (>= 1920px) - เพิ่มการรองรับสมาร์ททีวี */
+@media (min-width: 1920px) {
+  .coloring-page {
+    padding: 30px;
+  }
+
+  .coloring-header {
+    margin-bottom: 30px;
+  }
+
+  .coloring-header h1 {
+    font-size: 4rem;
+  }
+  
+  .back-btn, .change-image-btn {
+    font-size: 2rem;
+    padding: 20px 40px;
+    border-radius: 16px;
+  }
+
+  .music-btn {
+    font-size: 2rem;
+    padding: 20px 30px;
+  }
+  
+  .coloring-container {
+    gap: 50px;
+    max-width: 95%;
+    margin: 0 auto;
+    padding: 20px 0;
+  }
+
+  .canvas-wrapper {
+    padding: 20px;
+    border-radius: 24px;
+  }
+
+  .drawing-stage {
+    border-width: 5px;
+    border-radius: 12px;
+  }
+  
+  .mascot {
+    bottom: 60px;
+    right: 60px;
+  }
+  
+  .mascot-avatar {
+    font-size: 7rem;
+  }
+  
+  .mascot-speech {
+    font-size: 2rem;
+    padding: 25px 40px;
+    border-radius: 30px;
+  }
+
+  .mascot-speech::before {
+    top: -15px;
+    right: 40px;
+    border-left: 15px solid transparent;
+    border-right: 15px solid transparent;
+    border-bottom: 15px solid white;
+  }
+
+  /* Setup screen for TV */
+  .setup-section {
+    padding: 50px;
+    border-radius: 30px;
+  }
+
+  .setup-section h2 {
+    font-size: 2.5rem;
+    margin-bottom: 35px;
+  }
+
+  .gallery-item {
+    min-width: 280px;
+    max-width: 280px;
+  }
+
+  .gallery-item img {
+    height: 280px;
+  }
+
+  .gallery-item span {
+    font-size: 1.3rem;
+    padding: 18px;
+  }
+
+  .upload-big-btn {
+    padding: 80px;
+    border-radius: 30px;
+    border-width: 6px;
+  }
+
+  .upload-big-btn .icon {
+    font-size: 6rem;
+  }
+
+  .upload-big-btn .text {
+    font-size: 2rem;
+  }
+
+  .upload-big-btn .hint {
+    font-size: 1.4rem;
+  }
+}
+
+/* Large screens (Desktop 1200-1920px) */
+@media (min-width: 1200px) and (max-width: 1920px) {
+  .coloring-container {
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+}
+
+/* Medium screens (Tablets 768-1199px) */
+@media (min-width: 768px) and (max-width: 1199px) {
+  .coloring-header h1 {
+    font-size: 2rem;
+  }
+  
+  .back-btn, .change-image-btn, .music-btn {
+    font-size: 1rem;
+    padding: 10px 20px;
+  }
+  
+  .coloring-container {
+    gap: 15px;
+  }
+  
+  .mascot {
+    bottom: 20px;
+    right: 20px;
+  }
+  
+  .mascot-avatar {
+    font-size: 3rem;
+  }
+  
+  .mascot-speech {
+    font-size: 0.9rem;
+    padding: 8px 16px;
+  }
+}
+
+/* Small screens (Mobile <768px) */
+@media (max-width: 767px) {
+  .coloring-page {
+    padding: 10px;
+  }
+  
+  .coloring-header {
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+  
+  .coloring-header h1 {
+    font-size: 1.8rem;
+  }
+  
+  .header-actions {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .back-btn, .change-image-btn {
+    font-size: 0.9rem;
+    padding: 8px 16px;
+  }
+  
+  .music-btn {
+    font-size: 1.2rem;
+    padding: 8px 16px;
+  }
+  
+  .coloring-container {
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+  }
+  
+  .canvas-wrapper {
+    width: 100%;
+    padding: 5px;
+  }
+  
+  .drawing-stage {
+    max-width: 100%;
+    height: auto;
+  }
+  
+  .mascot {
+    bottom: 15px;
+    right: 15px;
+  }
+  
+  .mascot-avatar {
+    font-size: 2.5rem;
+  }
+  
+  .mascot-speech {
+    font-size: 0.85rem;
+    padding: 8px 12px;
+  }
+  
+  .setup-section {
+    padding: 20px;
+  }
+  
+  .setup-section h2 {
+    font-size: 1.4rem;
+  }
+  
+  .image-gallery {
+    gap: 15px;
+  }
+  
+  .gallery-item {
+    min-width: 150px;
+    max-width: 150px;
+  }
+  
+  .gallery-item img {
+    height: 150px;
+  }
+  
+  .upload-big-btn {
+    padding: 30px;
+  }
+  
+  .upload-big-btn .icon {
+    font-size: 3rem;
+  }
+  
+  .upload-big-btn .text {
+    font-size: 1.2rem;
+  }
+}
+
+/* Landscape orientation adjustments */
+@media (max-height: 600px) and (orientation: landscape) {
+  .coloring-header {
+    margin-bottom: 10px;
+  }
+  
+  .coloring-header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .back-btn, .change-image-btn, .music-btn {
+    padding: 8px 16px;
+    font-size: 0.9rem;
+  }
+  
+  .coloring-container {
+    gap: 10px;
+  }
+  
+  .mascot {
+    display: none;
+  }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .drawing-stage {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+}
