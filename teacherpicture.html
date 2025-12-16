@@ -70,14 +70,19 @@
   </div>
 </div>
 
-<script>
+<script type="module">
+import { db, saveActivityToFirebase, getAllActivities, deleteActivityFromFirebase } from '/js/firebase-config.js';
+
 let correctImages = [];
 let wrongImages = [];
 
-
+// ทำให้ฟังก์ชันสำคัญเข้าถึงได้จากทั่วโลก
+window.saveActivityToFirebase = saveActivityToFirebase;
+window.getAllActivities = getAllActivities;
+window.deleteActivityFromFirebase = deleteActivityFromFirebase;
 
 // ฟังก์ชันจัดการรูปภาพที่อัปโหลด
-function handleImageUpload(event, type) {
+window.handleImageUpload = function(event, type) {
   const file = event.target.files[0];
   if (!file) return;
 
@@ -264,14 +269,13 @@ function saveConfig() {
 }
 
 // ฟังก์ชันบันทึกกิจกรรม
-function saveActivity() {
+async function saveActivity() {
   const week = document.getElementById('weekInput')?.value.trim();
   const topic = document.getElementById('topicInput')?.value.trim();
   const unit = document.getElementById('unitInput')?.value.trim();
   const teacher = document.getElementById('teacherInput')?.value.trim();
   const mainTopic = document.getElementById('mainTopicInput')?.value.trim();
-    const userName = document.getElementById('userNameInput').value.trim();
-
+  const userName = document.getElementById('userNameInput').value.trim();
 
   // Allow partial data — apply defaults where missing
   const cfgWeek = week || '-';
@@ -345,8 +349,8 @@ function saveActivity() {
 }
 
 // ฟังก์ชันโหลดกิจกรรม
-function loadActivity() {
-  const savedActivities = JSON.parse(localStorage.getItem('savedActivities') || '[]');
+async function loadActivity() {
+  const savedActivities = await window.getAllActivities();
   const pictureActivities = savedActivities.filter(a => a.type === 'picture');
   
   if (pictureActivities.length === 0) {
@@ -360,19 +364,19 @@ function loadActivity() {
          onmouseover="this.style.transform='scale(1.02)'"
          onmouseout="this.style.transform='scale(1)'">
       <div style="display: flex; justify-content: space-between; align-items: start;">
-        <div style="flex: 1; cursor: pointer;" onclick="playActivity(${activity.id})">
+        <div style="flex: 1; cursor: pointer;" onclick="playActivity('${activity.id}')">
           <h3 style="margin: 0 0 8px 0; color: #333; font-size: 18px;">🖼️ ${activity.name}</h3>
           <p style="margin: 4px 0; color: #666; font-size: 14px;">สาระ: ${activity.topic}</p>
           <p style="margin: 4px 0; color: #666; font-size: 14px;">หัวข้อ: ${activity.mainTopic || '-'}</p>
-          <p style="margin: 4px 0; color: #999; font-size: 12px;">บันทึก: ${activity.savedAtDisplay}</p>
+          <p style="margin: 4px 0; color: #999; font-size: 12px;">บันทึก: ${new Date(activity.createdAt).toLocaleString('th-TH')}</p>
           <p style="margin: 4px 0; color: #667eea; font-size: 14px; font-weight: 600;">รูปถูก: ${activity.config.correctImages?.length || 0} / รูปผิด: ${activity.config.wrongImages?.length || 0}</p>
         </div>
         <div style="display: flex; gap: 8px;">
-          <button onclick="event.stopPropagation(); editActivity(${activity.id})" 
+          <button onclick="event.stopPropagation(); editActivity('${activity.id}')" 
                   style="background: #3498db; color: white; border: none; border-radius: 50%; width: 35px; height: 35px; cursor: pointer; font-size: 18px;">
             ✏️
           </button>
-          <button onclick="event.stopPropagation(); deleteActivity(${activity.id})" 
+          <button onclick="event.stopPropagation(); deleteActivityFirebase('${activity.id}')" 
                   style="background: #e74c3c; color: white; border: none; border-radius: 50%; width: 35px; height: 35px; cursor: pointer; font-size: 18px;">
             🗑️
           </button>
@@ -413,8 +417,8 @@ function selectActivity(activityId) {
 }
 
   // เริ่มเล่นกิจกรรมทันที (navigate to the appropriate game page)
-  function playActivity(activityId) {
-    const savedActivities = JSON.parse(localStorage.getItem('savedActivities') || '[]');
+  async function playActivity(activityId) {
+    const savedActivities = await window.getAllActivities();
     const activity = savedActivities.find(a => a.id === activityId);
     if (!activity) { alert('ไม่พบกิจกรรมนี้'); return; }
 
@@ -466,13 +470,10 @@ function editActivity(activityId) {
 }
 
 // ลบกิจกรรม
-function deleteActivity(activityId) {
+async function deleteActivityFirebase(activityId) {
   if (!confirm('ต้องการลบกิจกรรมนี้หรือไม่?')) return;
   
-  let savedActivities = JSON.parse(localStorage.getItem('savedActivities') || '[]');
-  savedActivities = savedActivities.filter(a => a.id !== activityId);
-  localStorage.setItem('savedActivities', JSON.stringify(savedActivities));
-  
+  await window.deleteActivityFromFirebase(activityId);
   loadActivity();
 }
 
@@ -480,6 +481,18 @@ function deleteActivity(activityId) {
 function closeActivityModal() {
   document.getElementById('activityModal').style.display = 'none';
 }
+
+// ทำให้ฟังก์ชันเข้าถึงได้จากทั่วโลก
+window.handleImageUpload = handleImageUpload;
+window.removeImage = removeImage;
+window.saveConfig = saveConfig;
+window.saveActivity = saveActivity;
+window.loadActivity = loadActivity;
+window.selectActivity = selectActivity;
+window.playActivity = playActivity;
+window.editActivity = editActivity;
+window.deleteActivityFirebase = deleteActivityFirebase;
+window.closeActivityModal = closeActivityModal;
 
 </script>
 

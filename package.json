@@ -4,11 +4,18 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "build": "cd classroomv3-main && npm install && npm run build",
+    "dev": "concurrently \"npm run server\" \"npm run studio\"",
+    "server": "node server.js",
+    "studio": "cd classroomv3-main && npm run dev"
   },
   "dependencies": {
+    "concurrently": "^8.2.2",
     "dotenv": "^17.2.3",
     "express": "^4.21.2",
+    "firebase": "^12.6.0",
+    "http-proxy-middleware": "^2.0.6",
     "mongodb": "^7.0.0",
     "socket.io": "^4.8.1"
   },

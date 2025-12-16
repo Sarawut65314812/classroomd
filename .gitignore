@@ -1,0 +1,10 @@
+node_modules/
+.env
+dist/
+*.log
+.DS_Store
+uploads/*
+!uploads/.gitkeep
+data/usage/*.ndjson
+classroomv3-main/dist/
+classroomv3-main/node_modules/

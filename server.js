@@ -6,6 +6,7 @@ import http from "http"
 import fs from "fs"
 import { MongoClient } from 'mongodb'
 import dotenv from 'dotenv'
+import { createProxyMiddleware } from 'http-proxy-middleware'
 
 // Load environment variables from .env file
 dotenv.config()
@@ -27,6 +28,33 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 app.use(express.json({ limit: '50mb' }))
 app.use(express.urlencoded({ extended: true, limit: '50mb' }))
 app.use(express.static(__dirname))
+
+// Redirect old path to new path
+app.get('/classroomv3-main*', (req, res) => {
+  res.redirect(301, '/studio' + req.path.replace('/classroomv3-main', ''))
+})
+
+// Serve built Vite app in production, proxy to dev server in development
+if (process.env.NODE_ENV === 'production') {
+  // Serve the built Vite app
+  const studioPath = path.join(__dirname, 'classroomv3-main', 'dist')
+  app.use('/studio', express.static(studioPath))
+  
+  // Fallback for SPA routing
+  app.get('/studio/*', (req, res) => {
+    res.sendFile(path.join(studioPath, 'index.html'))
+  })
+} else {
+  // Proxy /studio to Vite dev server (port 5173) in development
+  app.use('/studio', createProxyMiddleware({
+    target: 'http://localhost:5173',
+    changeOrigin: true,
+    ws: true,
+    pathRewrite: {
+      '^/studio': '/studio'
+    }
+  }))
+}
 
 // Upload endpoint: accept base64 DataURL JSON and save to /uploads
 app.post('/uploadBase64', async (req, res) => {
