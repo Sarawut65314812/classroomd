@@ -12,8 +12,10 @@ import { createProxyMiddleware } from 'http-proxy-middleware'
 dotenv.config()
 
 const app = express()
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-// Serve static HTML pages by route (ต้องอยู่หลัง const app = express())
+// Serve static HTML pages by route
+app.get("/", (req, res) => res.sendFile(path.join(__dirname, "menu.html")));
 app.get("/catagoly", (req, res) => res.sendFile(path.join(__dirname, "catagoly.html")));
 app.get("/menu", (req, res) => res.sendFile(path.join(__dirname, "menu.html")));
 app.get("/gamemath", (req, res) => res.sendFile(path.join(__dirname, "gamemath.html")));
@@ -22,7 +24,6 @@ app.get("/gamethai", (req, res) => res.sendFile(path.join(__dirname, "gamethai.h
 app.get("/teachermatch", (req, res) => res.sendFile(path.join(__dirname, "teachermatch.html")));
 app.get("/teacherpicture", (req, res) => res.sendFile(path.join(__dirname, "teacherpicture.html")));
 app.get("/teacherthai", (req, res) => res.sendFile(path.join(__dirname, "teacherthai.html")));
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 // Allow larger JSON bodies (for base64 uploads) and urlencoded bodies
 app.use(express.json({ limit: '50mb' }))
