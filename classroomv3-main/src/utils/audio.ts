@@ -12,14 +12,14 @@ class AudioManager {
 
   private preloadSounds() {
     // Preload เสียงเพื่อให้เล่นได้ทันที
-    this.loadSound('correct', '/sounds/correct.wav')
-    this.loadSound('fail', '/sounds/fail.wav')
-    this.loadSound('endgame', '/sounds/endgame.wav')
+    this.loadSound('correct', '/studio/sounds/correct.wav')
+    this.loadSound('fail', '/studio/sounds/fail.wav')
+    this.loadSound('endgame', '/studio/sounds/endgame.wav')
   }
 
   private loadBackgroundMusic() {
     try {
-      this.backgroundMusic = new Audio('/sounds/Background.mp3')
+      this.backgroundMusic = new Audio('/studio/sounds/Background.mp3')
       this.backgroundMusic.loop = true
       this.backgroundMusic.volume = 0.15 // เสียงเบาๆ 15%
       this.backgroundMusic.preload = 'auto'
