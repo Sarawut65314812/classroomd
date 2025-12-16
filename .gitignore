@@ -8,19 +8,3 @@ uploads/*
 data/usage/*.ndjson
 classroomv3-main/dist/
 classroomv3-main/node_modules/
-
-# ไฟล์ขนาดใหญ่ที่ไม่จำเป็นต้อง deploy
-picture/*
-!picture/.gitkeep
-Sound/*
-!Sound/.gitkeep
-video/*
-!video/.gitkeep
-*.mp4
-*.mp3
-*.wav
-*.jpg
-*.jpeg
-*.png
-*.gif
-!classroomv3-main/public/images/**

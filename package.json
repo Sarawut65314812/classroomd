@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "build": "cd classroomv3-main && npm install && npm run build",
+    "build": "cd classroomv3-main && npm ci --prefer-offline && npm run build",
     "dev": "concurrently \"npm run server\" \"npm run studio\"",
     "server": "node server.js",
     "studio": "cd classroomv3-main && npm run dev"
